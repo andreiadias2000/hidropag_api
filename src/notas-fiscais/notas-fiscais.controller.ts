@@ -1,5 +1,5 @@
 //notas-fiscais.controler.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile, Put } from '@nestjs/common';
 import { NotasFiscaisService } from './notas-fiscais.service';
 import { Notas } from './entities/notas-fiscais.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -96,7 +96,7 @@ async baixarPdf(@Param('id') id: string, @Res({ passthrough: true }) res: Respon
     return await this.notasFiscaisService.buscarPorId(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   async atualizar(@Param('id') id: string, @Body() nota: Partial<Notas>) {
     return await this.notasFiscaisService.alterar(id, nota);
   }

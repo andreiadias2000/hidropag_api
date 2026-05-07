@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { FiliaisService } from './filiais.service';
 import { Filiais } from './entities/filiais.entity';
 
@@ -21,7 +21,7 @@ export class FiliaisController {
     return await this.filiaisService.buscarPorId(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   async atualizar(@Param('id') id: string, @Body() dados: Partial<Filiais>) {
     return await this.filiaisService.alterar(id, dados);
   }
