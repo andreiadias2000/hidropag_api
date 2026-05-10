@@ -28,3 +28,4 @@ npm install -D @types/bcrypt
 arrumar usurios login
 
 add hash e email unico.
+blablabla
