@@ -30,3 +30,4 @@ arrumar usurios login
 add hash e email unico.
 blablabla
 vamos ver se vai agora.
+funcionou
