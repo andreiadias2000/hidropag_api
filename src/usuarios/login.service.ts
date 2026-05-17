@@ -89,11 +89,14 @@ export class LoginService {
     throw { id: 401, msg: "Usuario ou senha invalidos" };
 }
 
-    async validarToken(token: string): Promise<void> {
+    async validarToken(token: string): Promise<any> { // <-- Mudou de void para any
         try {
             const SECRET = process.env.JTW_SENHA;
-            jwt.verify(token, SECRET as string);            
-            return;
+            
+            // O jwt.verify decodifica o token e retorna o objeto do usuário que você salvou no login
+            const payload = jwt.verify(token, SECRET as string);
+            
+            return payload; // <-- AQUI ESTÁ O SEGREDO: Agora estamos retornando os dados!
         } catch (err) {
             throw { id: 401, msg: "Token inválido ou expirado" };
         }

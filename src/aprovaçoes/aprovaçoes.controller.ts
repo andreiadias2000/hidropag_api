@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { AprovaçoesService } from './aprovaçoes.service';
 import { APROVACOES } from './entities/aprovaçoe.entity';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 
 
 @ApiTags('APROVACOES')
 @Controller('APROVACOES') // Rota: http://localhost:3000/APROVACOES
 @ApiBearerAuth('token-acesso')
+@UseGuards(RolesGuard) // <--- ISSO PROTEGE O CONTROLLER INTEIRO!
 export class AprovaçoesController {
   
   constructor(private readonly aprovaçoesService: AprovaçoesService) {}

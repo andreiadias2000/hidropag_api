@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ObrasEmpreendimentosService } from './obras-empreendimentos.service';
 import { CreateObrasEmpreendimentoDto } from './dto/create-obras-empreendimento.dto';
 import { UpdateObrasEmpreendimentoDto } from './dto/update-obras-empreendimento.dto';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('OBRAS')
 @ApiBearerAuth('token-acesso')
 @Controller('OBRAS')
+@UseGuards(RolesGuard) // <--- ISSO PROTEGE O CONTROLLER INTEIRO!
 export class ObrasEmpreendimentosController {
   // Mantido exatamente como o que o ivan fez: 'service'
   constructor(private readonly service: ObrasEmpreendimentosService) {}

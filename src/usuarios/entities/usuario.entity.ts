@@ -11,15 +11,15 @@ export class Usuarios{
     id?: number;
 
     @Column()
-    @ApiProperty({ example: 'Ivan Silva', description: 'Nome completo do usuário' })
+    
     nome?: string 
 
     @Column({ unique: true })// emial vai ser unico 
-    @ApiProperty({ example: 'ivan@teste.com' })
+    
     email?: string;
 
     @Column({ name: 'senha', nullable: false })
-    @ApiProperty({ description: 'Senha do usuário' })
+    
     senha?: string;
     
     // Mudança aqui: Relacionamento com a nova tabela

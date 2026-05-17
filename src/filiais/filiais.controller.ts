@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards } from '@nestjs/common';
 import { FiliaisService } from './filiais.service';
 
 import { CreateFilialDto } from './dto/create-filiais.dto'; 
 import { UpdateFilialDto } from './dto/update-filiais.dto'; 
 import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('FILIAIS')
 @ApiBearerAuth('token-acesso')
 @Controller('FILIAIS')
+@UseGuards(RolesGuard) // <--- ISSO PROTEGE O CONTROLLER INTEIRO!
 export class FiliaisController {
   constructor(private readonly filiaisService: FiliaisService) {}
 

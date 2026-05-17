@@ -1,14 +1,16 @@
 //notas-fiscais.controler.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile, Put, UseGuards } from '@nestjs/common';
 import { NotasFiscaisService } from './notas-fiscais.service';
 import { Notas } from './entities/notas-fiscais.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('NOTAS') // Organiza no Swagger
 @ApiBearerAuth('token-acesso')
 @Controller('NOTAS')
+@UseGuards(RolesGuard) // <--- ISSO PROTEGE O CONTROLLER INTEIRO!
 export class NotasFiscaisController {
   
   constructor(private readonly notasFiscaisService: NotasFiscaisService) {}

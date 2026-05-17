@@ -1,3 +1,4 @@
+// src/common/middlewares/token.middleware.ts
 import { NextFunction, Request, Response } from "express";
 import { LoginService } from "../../usuarios/login.service";
 
@@ -9,8 +10,6 @@ export class TokenMiddleware {
 
         if (authHeader) {
             try {
-                // O header vem como "Bearer <token>"
-                // Dividimos a string pelo espaço e pegamos a segunda parte [1]
                 const partes = authHeader.split(' ');
                 
                 if (partes.length !== 2) {
@@ -19,12 +18,15 @@ export class TokenMiddleware {
 
                 const tokenLimpo = partes[1];
 
-                // Agora sim, validamos apenas o código do token
-                await this.service.validarToken(tokenLimpo);
+                // Captura o objeto decodificado retornado pelo método atualizado
+                const usuarioDecodificado = await this.service.validarToken(tokenLimpo);
+                
+                // Injeta o usuário com o perfil dentro da requisição atual
+                req['user'] = usuarioDecodificado; 
+
                 next();
             }
             catch (err: any) {
-                // Se o JWT estiver expirado ou a SECRET estiver errada no .env
                 res.status(401).json({ erro: "Token inválido ou expirado" });
             }
         } 

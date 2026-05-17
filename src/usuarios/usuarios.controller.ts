@@ -1,15 +1,19 @@
 // src/usuarios/usuarios.controller.ts
-import { Controller, Get, Post, Delete, Body, Put, Param, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Put, Param, Res, HttpStatus, UseGuards } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { Usuarios } from './entities/usuario.entity';
 import { LoginService } from './login.service';
 import * as express from 'express';
 // Adicione o ApiBearerAuth na importação abaixo:
 import { ApiBody, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
 @ApiTags('usuarios') // Organiza no Swagger sob a aba 'usuarios'
 @ApiBearerAuth('token-acesso') // <--- ISSO ativa o cadeado no Swagger para este controller
 @Controller('usuarios')
+
 export class UsuariosController {
   
   constructor(
@@ -50,8 +54,9 @@ export class UsuariosController {
 
   @Post()
   @ApiOperation({ summary: 'Criar novo usuário' })
-  async criar(@Body() usuario: Usuarios): Promise<Usuarios> {
-    return await this.usuariosService.inserir(usuario);
+  @UseGuards(RolesGuard) // Seu guardião que bloqueia o leitor
+  async criar(@Body() usuario: CreateUsuarioDto): Promise<Usuarios> {
+    return await this.usuariosService.inserir(usuario as any);
   }
 
   @Get()
@@ -68,8 +73,9 @@ export class UsuariosController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar usuário (Requer Token)' })
-  async atualizar(@Param('id') id: number, @Body() usuario: Usuarios): Promise<void> {
-    await this.usuariosService.alterar(id, usuario);
+  @UseGuards(RolesGuard) // Seu guardião que bloqueia o leitor
+  async atualizar(@Param('id') id: number, @Body() usuario: UpdateUsuarioDto): Promise<void> {
+    await this.usuariosService.alterar(id, usuario as any);
   }
 
   @Delete(':id')
