@@ -6,7 +6,12 @@ export class RolesGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const usuario = request['user']; 
-
+    console.log("-----------------------------------------");
+    console.log("DADOS DO USUÁRIO DENTRO DO JWT:", usuario);
+    console.log("NOME DO PERFIL CAPTURADO:", usuario?.perfil?.nome);
+    console.log("MÉTODO HTTP:", request.method);
+    console.log("-----------------------------------------");
+    
     // Se o middleware não injetou o usuário por algum motivo, bloqueia por segurança
     if (!usuario) {
       throw new ForbiddenException('Acesso negado: Usuário não identificado na requisição.');

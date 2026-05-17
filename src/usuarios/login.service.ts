@@ -6,57 +6,6 @@ import { Usuarios } from "./entities/usuario.entity";
 import * as jwt from "jsonwebtoken";
 import { HashService } from "../common/middlewares/hash.service";
 
-// const SECRET = "Sen@c2026";
-
-// @Injectable()
-// export class LoginService {
-    
-//     constructor(
-//         @InjectRepository(Usuarios)
-//         private readonly repository: Repository<Usuarios>
-//     ) {}
-
-//     async verificarLogin(email: string, senha: string): Promise<string> {
-//         // Busca o usuário no banco pelo e-mail
-//         const usuario = await this.repository.findOneBy({ email: email });
-
-//         // Verifica se o usuário existe e se a senha coincide
-//         if (usuario && usuario.senha === senha) {
-//             // Gera o token assinado
-//             const token = jwt.sign(
-//                 {
-//                     usuarioId: usuario.id,
-//                     usuarioEmail: usuario.email
-//                 }, 
-//                 SECRET, 
-//                 { expiresIn: '1h' }
-//             );
-            
-//             return token;
-//         }
-
-//         // Se chegar aqui, as credenciais estão erradas
-//         throw { id: 401, msg: "Usuario ou senha invalidos" };
-//     }
-
-//     async validarToken(token: string): Promise<void> {
-//         try {
-//             console.log("Validando Token:", token);
-
-//             // Tenta verificar a assinatura do token
-//             const payload = jwt.verify(token, SECRET);            
-            
-//             if (!payload) {
-//                 throw { id: 401, msg: "Token inválido" };
-//             }
-            
-//             return;
-//         } catch (err) {
-//             // Se o JWT estiver expirado ou alterado, cai aqui
-//             throw { id: 401, msg: "Token inválido ou expirado" };
-//         }
-//     }
-// }
 @Injectable()
 export class LoginService {
     constructor(
@@ -66,37 +15,51 @@ export class LoginService {
     ) {}
 
     async verificarLogin(email: string, senha: string): Promise<string> {
-    const SECRET = process.env.JTW_SENHA;
-    const usuario = await this.repository.findOneBy({ email: email });
+        const SECRET = process.env.JTW_SENHA;
+        
+        // CORREÇÃO CRUCIAL: Adicionado 'relations' para o TypeORM trazer o perfil do banco de dados
+        const usuario = await this.repository.findOne({ 
+            where: { email: email },
+            relations: ['perfil'] 
+        });
 
-    // 1. Verificamos se o usuário existe E se ele tem uma senha gravada no banco
-    if (!usuario || !usuario.senha) {
+        // 1. Verificamos se o usuário existe E se ele tem uma senha gravada no banco
+        if (!usuario || !usuario.senha) {
+            throw { id: 401, msg: "Usuario ou senha invalidos" };
+        }
+
+        // 2. Agora o TS sabe que 'usuario.senha' é uma string garantida
+        const senhaValida = await this.hashService.comparar(senha, usuario.senha);
+
+        if (senhaValida) {
+            // CORREÇÃO CRUCIAL: Agora injetamos a estrutura de perfil COMPLETA dentro do payload do JWT
+            const token = jwt.sign(
+                { 
+                    id: usuario.id, 
+                    nome: usuario.nome,
+                    email: usuario.email,
+                    perfil: {
+                        id: usuario.perfil?.id,
+                        nome: usuario.perfil?.nome // Aqui vai a palavra 'leitor' ou 'root'
+                    }
+                }, 
+                SECRET as string, 
+                { expiresIn: '1h' }
+            );
+            return token;
+        }
+
         throw { id: 401, msg: "Usuario ou senha invalidos" };
     }
 
-    // 2. Agora o TS sabe que 'usuario.senha' é uma string garantida
-    const senhaValida = await this.hashService.comparar(senha, usuario.senha);
-
-    if (senhaValida) {
-        const token = jwt.sign(
-            { usuarioId: usuario.id, usuarioEmail: usuario.email }, 
-            SECRET as string, 
-            { expiresIn: '1h' }
-        );
-        return token;
-    }
-
-    throw { id: 401, msg: "Usuario ou senha invalidos" };
-}
-
-    async validarToken(token: string): Promise<any> { // <-- Mudou de void para any
+    async validarToken(token: string): Promise<any> {
         try {
             const SECRET = process.env.JTW_SENHA;
             
-            // O jwt.verify decodifica o token e retorna o objeto do usuário que você salvou no login
+            // O jwt.verify decodifica o token e retorna o objeto do usuário completo com o perfil injetado
             const payload = jwt.verify(token, SECRET as string);
             
-            return payload; // <-- AQUI ESTÁ O SEGREDO: Agora estamos retornando os dados!
+            return payload; // Retorna os dados para o TokenMiddleware salvar em req['user']
         } catch (err) {
             throw { id: 401, msg: "Token inválido ou expirado" };
         }
