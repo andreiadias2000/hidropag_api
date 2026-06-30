@@ -8,7 +8,12 @@ import { ValidationPipe } from '@nestjs/common'; // adicionei esta linha
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+  // 👇 ADICIONADO CONFIGURAÇÃO DE CORS
+  app.enableCors({
+    origin: ['https://hidropagfront.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
+    methods: 'GET,HEAD,PUT,POST,DELETE',
+    credentials: true,
+  });
   // Ela obriga a API a validar os dados de entrada usando os DTOs.
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,          // Remove campos enviados que não estão no DTO
