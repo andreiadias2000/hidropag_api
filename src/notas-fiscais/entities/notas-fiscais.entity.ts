@@ -57,5 +57,6 @@ export class Notas {
     @OneToMany(() => APROVACOES, (aprovacao) => aprovacao.nota)
     aprovacoes?: APROVACOES[];
 
+    link_pdf?: string | null;
 }
 

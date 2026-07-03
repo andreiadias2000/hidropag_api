@@ -88,12 +88,16 @@ export class NotasFiscaisService {
         });
       }
     }
-
-    return notas.map(nota => ({
-      ...nota,
-      // 💡 CORREÇÃO AQUI: Passamos 'as string' no índice do mapa
-      link_pdf: nota.arquivoPdf ? urlsMap[nota.arquivoPdf as string] : null
-    }));
+    // Retorna as notas adicionando a propriedade "link_pdf" no JSON
+    return notas.map(nota => {
+      // Pega a URL se existir, senão força a ser null (para não sumir do JSON)
+      const url = nota.arquivoPdf ? urlsMap[nota.arquivoPdf as string] : null;
+      
+      return {
+        ...nota,
+        link_pdf: url || null 
+      };
+    });
   }
 
   // Buscar por ID
