@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // 👇 ADICIONADO CONFIGURAÇÃO DE CORS
   app.enableCors({
-    origin: ['https://hidropagfront.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
+    origin: ['https://hidropagfront.vercel.app', 'http://localhost:3000', 'http://localhost:5173','http://127.0.0.1:5174'],
     methods: 'GET,HEAD,PUT,POST,DELETE',
     credentials: true,
   });
