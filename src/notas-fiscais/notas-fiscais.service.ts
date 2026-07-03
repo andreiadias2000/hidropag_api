@@ -49,9 +49,12 @@ export class NotasFiscaisService {
     return await this.repository.save(novaNota);
   }
 
-  // Listar todas com a Obra vinculada (Rápido)
-  async listar(): Promise<Notas[]> {
-    return await this.repository.find({
+  
+
+
+  // Listar todas
+  async listar(): Promise<any[]> {
+    const notas = await this.repository.find({
       select: {
         id: true,
         numero_nf: true,
@@ -60,18 +63,41 @@ export class NotasFiscaisService {
         valor_total: true,
         quant_parcelas: true,
         status: true,
-        tem_anexo: true, 
-        obra: {
-          id: true,
-          nome_obra: true,
-        }
+        tem_anexo: true,
+        arquivoPdf: true, 
+        obra: { id: true, nome_obra: true }
       },
       relations: ['obra'], 
     });
+
+    // 💡 CORREÇÃO AQUI: Garantimos ao TS que a extração resultará em uma lista de strings
+    const paths = notas
+      .filter(n => n.arquivoPdf)
+      .map(n => n.arquivoPdf as string); 
+
+    const urlsMap: Record<string, string> = {};
+
+    if (paths.length > 0) {
+      const { data } = await this.supabase.storage.from('pdf').createSignedUrls(paths, 3600);
+      if (data) {
+        data.forEach(item => {
+          // 💡 CORREÇÃO AQUI: Garantimos que item.path e item.signedUrl sejam tratados como strings
+          if (!item.error && item.path && item.signedUrl) {
+             urlsMap[item.path as string] = item.signedUrl as string;
+          }
+        });
+      }
+    }
+
+    return notas.map(nota => ({
+      ...nota,
+      // 💡 CORREÇÃO AQUI: Passamos 'as string' no índice do mapa
+      link_pdf: nota.arquivoPdf ? urlsMap[nota.arquivoPdf as string] : null
+    }));
   }
 
-  // 1. GET NORMAL POR ID: Rápido e não trava o Swagger
-  async buscarPorId(id: string): Promise<Notas> {
+  // Buscar por ID
+  async buscarPorId(id: string): Promise<any> {
     const nota = await this.repository.findOne({
       where: { id: id as any },
       relations: ['obra'],
@@ -84,18 +110,24 @@ export class NotasFiscaisService {
         quant_parcelas: true,
         status: true,
         tem_anexo: true, 
-        obra: {
-          id: true,
-          nome_obra: true,
-          ativo: true
-        }
+        arquivoPdf: true, 
+        obra: { id: true, nome_obra: true, ativo: true }
       }
     });
 
     if (!nota) {
       throw new NotFoundException(`Nota fiscal com ID ${id} não encontrada`);
     }
-    return nota;
+
+    // 💡 CORREÇÃO AQUI: Tipamos explicitamente a variável
+    let link_pdf: string | undefined = undefined;
+
+    if (nota.arquivoPdf) {
+      const { data } = await this.supabase.storage.from('pdf').createSignedUrl(nota.arquivoPdf, 3600);
+      link_pdf = data?.signedUrl;
+    }
+
+    return { ...nota, link_pdf };
   }
 
   // 2. NOVO: Gera a URL segura do PDF direto do Supabase para visualização/download

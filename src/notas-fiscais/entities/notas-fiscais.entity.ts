@@ -38,9 +38,14 @@ export class Notas {
     @ApiProperty({ example: 0 }) // Ex: 0 para pendente, 1 para pago
     status?: number;
 
-    @Column({ type: 'bytea', nullable: true })
+    // @Column({ type: 'bytea', nullable: true })  codigo old do pdf
+    // @ApiHideProperty()
+    // arquivoPdf?: Buffer; //[cite: 3]
+
+    // Remova a coluna antiga de buffer/blob e adicione esta:
+    @Column({ name: 'url_pdf', type: 'varchar', nullable: true })
     @ApiHideProperty()
-    arquivoPdf?: Buffer; //[cite: 3]
+    arquivoPdf?: string;
     
     // Relacionamento: Muitas notas pertencem a uma única Obra
     @ApiHideProperty()
