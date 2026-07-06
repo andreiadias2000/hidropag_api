@@ -43,12 +43,43 @@ export class NotasFiscaisController {
     @Body() dados: CreateNotasFiscaiDto, 
     @UploadedFile() file: Express.Multer.File
   ) {
-    const notaParaSalvar: any = { 
-      ...dados,
-      obra: { id: dados.obra } 
-    };
-    return await this.notasFiscaisService.inserir(notaParaSalvar, file);
+    try {
+      // 1. INSPECIONANDO OS DADOS QUE CHEGAM DO REACT
+      console.log("=== INICIANDO CADASTRO DE NOTA ===");
+      console.log("DADOS BRUTOS RECEBIDOS (Body):", dados);
+      console.log("ARQUIVO RECEBIDO:", file ? file.originalname : "Nenhum arquivo anexado");
+
+      const notaParaSalvar: any = { 
+        ...dados,
+        obra: { id: dados.obra } 
+      };
+
+      console.log("OBJETO MONTADO PARA SALVAR:", notaParaSalvar);
+
+      // 2. CHAMA O SERVICE
+      const resultado = await this.notasFiscaisService.inserir(notaParaSalvar, file);
+      
+      console.log("=== NOTA SALVA COM SUCESSO! ===");
+      return resultado;
+
+    } catch (error) {
+      // 3. CAPTURA E EXIBE O ERRO REAL
+      console.error("❌ ERRO FATAL AO SALVAR NOTA FISCAL:", error);
+      
+      // Retorna o erro detalhado para o frontend
+      throw new InternalServerErrorException({
+        message: 'Erro interno ao tentar salvar a nota',
+        detalhe: error.message,
+        stack: error.stack
+      });
+    }
   }
+  //   const notaParaSalvar: any = { 
+  //     ...dados,
+  //     obra: { id: dados.obra } 
+  //   };
+  //   return await this.notasFiscaisService.inserir(notaParaSalvar, file);
+  // }
 
   @Get()
   @ApiOperation({ summary: 'Lista as notas fiscais e exibe o link do PDF no JSON' })
