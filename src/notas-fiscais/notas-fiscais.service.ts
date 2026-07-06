@@ -15,6 +15,9 @@ export class NotasFiscaisService {
     @InjectRepository(Notas)
     private readonly repository: Repository<Notas>,
   ) {
+    console.log('Iniciando Supabase. URL está vazia?', !process.env.SUPABASE_URL);
+
+
     this.supabase = createClient(
       process.env.SUPABASE_URL as string, 
       process.env.SUPABASE_KEY as string
@@ -32,6 +35,9 @@ export class NotasFiscaisService {
         });
 
       if (error) {
+
+        console.error('🔥 ERRO DETALHADO DO SUPABASE:', error);
+        
         throw new InternalServerErrorException('Erro ao fazer upload para o Supabase');
       }
 
