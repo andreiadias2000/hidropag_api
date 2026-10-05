@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: 'postgres',
   synchronize: true, // Cria as tabelas automaticamente
-  // dropSchema: true,  // ATENÇÃO: Isso apaga TODAS as tabelas toda vez que o servidor reinicia
+  //dropSchema: true,  // ATENÇÃO: Isso apaga TODAS as tabelas toda vez que o servidor reinicia
   logging: true,
   entities: [Filiais, Usuarios, Obras, Notas, APROVACOES,Perfil, Cliente],
   ssl: {
