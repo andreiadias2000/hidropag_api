@@ -7,7 +7,7 @@ import { Perfil } from "../../perfil/entities/perfil.entity";
 
 @Entity()
 export class Usuarios{
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id?: number;
 
     @Column()    
