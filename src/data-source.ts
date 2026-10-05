@@ -6,6 +6,7 @@ import { Obras } from "./obras-empreendimentos/entities/obras-empreendimento.ent
 import { Notas } from "./notas-fiscais/entities/notas-fiscais.entity";
 import { APROVACOES } from "./aprovaçoes/entities/aprovaçoe.entity";
 import { Perfil } from "./perfil/entities/perfil.entity";
+import { Cliente } from "./clientes/entities/cliente.entity";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
   synchronize: true, // Cria as tabelas automaticamente
   //dropSchema: true,  // ATENÇÃO: Isso apaga TODAS as tabelas toda vez que o servidor reinicia
   logging: true,
-  entities: [Filiais, Usuarios, Obras, Notas, APROVACOES,Perfil],
+  entities: [Filiais, Usuarios, Obras, Notas, APROVACOES,Perfil, Cliente],
   ssl: {
     rejectUnauthorized: false,
   },
