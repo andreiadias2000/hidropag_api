@@ -1,122 +1,81 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { ObrasEmpreendimentosService } from './obras-empreendimentos.service'; 
+// src/obras-empreendimentos/obras-empreendimentos.controller.ts
+
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { ObrasEmpreendimentosService } from './obras-empreendimentos.service';
 import { CreateObrasEmpreendimentoDto } from './dto/create-obras-empreendimento.dto';
 import { UpdateObrasEmpreendimentoDto } from './dto/update-obras-empreendimento.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Obras } from './entities/obras-empreendimento.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 
 @ApiTags('OBRAS')
 @ApiBearerAuth('token-acesso')
-@Controller('OBRAS')
-@UseGuards(RolesGuard) // <--- ISSO PROTEGE O CONTROLLER INTEIRO!
+@Controller('obras')
+@UseGuards(RolesGuard)
 export class ObrasEmpreendimentosController {
-  // Mantido exatamente como o que o ivan fez: 'service'
   constructor(
     private readonly obrasEmpreendimentosService: ObrasEmpreendimentosService,
-    
-    // SE ADICIONAR ISSO AQUI, O ERRO SOME:
-    @InjectRepository(Obras)
-    private readonly repository: Repository<Obras>,
   ) {}
+
   @Post()
-  @ApiOperation({ summary: 'Cadastrar nova obra' })
-  // O @ApiBody manual sumiu porque o CreateObrasEmpreendimentoDto já desenha o JSON no Swagger
-  async criar(@Body() obra: CreateObrasEmpreendimentoDto) { 
-    return await this.obrasEmpreendimentosService.inserir(obra);
+  @ApiOperation({ summary: 'Cadastrar nova obra/empreendimento' })
+  @ApiResponse({ status: 201, description: 'Obra criada com sucesso.', type: Obras })
+  async criar(@Body() dto: CreateObrasEmpreendimentoDto) {
+    return await this.obrasEmpreendimentosService.inserir(dto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar todas as obras' })
+  @ApiResponse({ status: 200, type: [Obras] })
   async buscarTodas() {
     return await this.obrasEmpreendimentosService.listar();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Buscar detalhes de uma obra pelo ID' })
+  @ApiResponse({ status: 200, type: Obras })
   async buscarUma(@Param('id', ParseUUIDPipe) id: string) {
     return await this.obrasEmpreendimentosService.buscarPorId(id);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Atualizar obra/empreendimento (Requer Token)' })
-  @UseGuards(RolesGuard) // Bloqueia o perfil 'leitor' de fazer alterações nas obras
-  @ApiBody({
-    description: 'Campos para atualização da Obra (Envie apenas o que deseja alterar)',
-    schema: {
-      type: 'object',
-      example: {
-        nome_obra: 'Hospital Moinhos de Vento',
-        filial: {
-          id: 'd3b07384-d113-4c4e-9c95-bd845d471018'
-        }
-      }
-    }
-  })
+  @ApiOperation({ summary: 'Atualizar dados cadastrais e financeiros da obra' })
+  @ApiResponse({ status: 200, description: 'Obra atualizada com sucesso.', type: Obras })
   async atualizar(
-    @Param('id', ParseUUIDPipe) id: string, 
-    @Body() dados: any 
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateObrasEmpreendimentoDto,
   ) {
-    // CORREÇÃO: Usando 'this.service' que é o nome real injetado no seu construtor
-    return await this.obrasEmpreendimentosService.alterar(id, dados);
+    return await this.obrasEmpreendimentosService.alterar(id, dto);
   }
 
-  
+  @Patch(':id/desativar')
+  @ApiOperation({ summary: 'Desativar status operacional da obra (ativo = false)' })
+  async desativar(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.obrasEmpreendimentosService.desativar(id);
+  }
+
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    // Agora o "this.repository" passa a existir aqui dentro
-    await this.repository.update(id, { ativo: false });
-    return { message: 'Obra desativada com sucesso' };
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Excluir obra (Soft Delete)' })
+  async remover(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.obrasEmpreendimentosService.excluir(id);
   }
 }
-
-
-
-// import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
-// import { ObrasEmpreendimentosService } from './obras-empreendimentos.service';
-// import { Obras } from './entities/obras-empreendimento.entity';
-// import { ApiBody, ApiOperation } from '@nestjs/swagger';
-
-// @Controller('OBRAS') // Mudei para 'obras' para facilitar o teste
-// export class ObrasEmpreendimentosController {
-//   constructor(private readonly service: ObrasEmpreendimentosService) {}
-
-//   @Post()
-//   @ApiOperation({ summary: 'Cadastrar nova obra' })
-//   @ApiBody({
-//     schema: {
-//       type: 'object',
-//       properties: {
-//         nome_obra: { type: 'string', example: 'Hospital Moinhos de Vento' },
-//         filial: { 
-//           type: 'object', 
-//           properties: { 
-//             id: { type: 'string', example: 'uuid-da-filial-aqui' } 
-//           } 
-//         }
-//       }
-//     }
-//   })
-//   async criar(@Body() obra: Obras) {
-//   return await this.service.inserir(obra);
-// }
-//   @Get()
-//   async buscarTodas() {
-//     return await this.service.listar();
-//   }
-
-//   @Get(':id')
-//   async buscarUma(@Param('id') id: string) {
-//     return await this.service.buscarPorId(id);
-//   }
-
-//   @Put(':id')
-//   async atualizar(@Param('id') id: string, @Body() dados: Partial<Obras>) {
-//     return await this.service.alterar(id, dados);
-//   }
-
-//   @Delete(':id')
-//   async remover(@Param('id') id: string) {
-//     return await this.service.excluir(id);
-//   }
-// }

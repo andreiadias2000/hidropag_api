@@ -7,8 +7,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Perfil } from "../../perfil/entities/perfil.entity";
 
 @Entity()
-export class Usuarios {
-    @PrimaryGeneratedColumn()
+export class Usuarios{
+    @PrimaryGeneratedColumn("uuid")
     id?: number;
 
     @Column()    
