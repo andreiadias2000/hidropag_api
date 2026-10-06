@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import { Controller } from '@nestjs/common';
-
-@Controller('clientes')
-export class ClientesController {}
-=======
 // src/clientes/clientes.controller.ts
 
 import {
@@ -110,4 +104,3 @@ export class ClientesController {
     return this.clientesService.remove(id);
   }
 }
->>>>>>> e49fe5edc4608c096fb9a3c1f817cdcffb300d1d

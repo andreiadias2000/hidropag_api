@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class ClientesService {}
-=======
 // src/clientes/clientes.service.ts
 
 import {
@@ -95,4 +89,3 @@ export class ClientesService {
     return { message: 'Cliente removido com sucesso.' };
   }
 }
->>>>>>> e49fe5edc4608c096fb9a3c1f817cdcffb300d1d
