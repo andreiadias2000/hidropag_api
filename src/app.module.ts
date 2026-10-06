@@ -19,6 +19,7 @@ import { FiliaisController } from './filiais/filiais.controller';
 import { AprovaçoesController } from './aprovaçoes/aprovaçoes.controller';
 import { PerfisController } from './perfil/entities/perfil.controller';
 import { ClientesModule } from './clientes/clientes.module';
+import { NotificacoesModule } from './notificacoes/notificacoes.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { ClientesModule } from './clientes/clientes.module';
     AprovaçoesModule,
     ObrasEmpreendimentosModule,
     PerfisModule,
-    ClientesModule, // Módulo de Perfis adicionado 
+    ClientesModule,
+    NotificacoesModule, // Módulo de Perfis adicionado 
   ],
 })
 export class AppModule implements NestModule {
