@@ -1,23 +1,3 @@
-<<<<<<< HEAD
-import { Test, TestingModule } from '@nestjs/testing';
-import { ClientesController } from './clientes.controller';
-
-describe('ClientesController', () => {
-  let controller: ClientesController;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ClientesController],
-    }).compile();
-
-    controller = module.get<ClientesController>(ClientesController);
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-});
-=======
 // src/clientes/clientes.controller.spec.ts
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -134,4 +114,3 @@ describe('ClientesController', () => {
     });
   });
 });
->>>>>>> e49fe5edc4608c096fb9a3c1f817cdcffb300d1d

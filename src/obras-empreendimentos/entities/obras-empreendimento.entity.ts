@@ -75,6 +75,20 @@ export class Obras {
   })
   valor_previsto!: number;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @ApiProperty({
+    example: 150000.0,
+    description: 'Orçamento total previsto',
+  })
+  orcamento_previsto!: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @ApiProperty({
+    example: 50000.0,
+    description: 'Custo acumulado da obra',
+  })
+  custo_acumulado!: number;
+
   @Column({ type: 'smallint', default: 1 })
   @ApiProperty({
     example: 1,
