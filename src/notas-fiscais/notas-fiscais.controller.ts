@@ -1,99 +1,202 @@
 // notas-fiscais.controller.ts
 
 import { 
-  Controller, Get, Post, Body, Param, Delete, UseInterceptors, 
-  UploadedFile, BadRequestException, Put, UseGuards, 
-  InternalServerErrorException
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Param, 
+  Delete, 
+  UseInterceptors, 
+  UploadedFile, 
+  BadRequestException, 
+  Patch, 
+  UseGuards, 
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus
 } from '@nestjs/common';
 import { NotasFiscaisService } from './notas-fiscais.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 import { CreateNotasFiscaiDto } from './dto/create-notas-fiscai.dto';
 import { UpdateNotasFiscaiDto } from './dto/update-notas-fiscai.dto';
+import { Notas } from './entities/notas-fiscais.entity';
 
 @ApiTags('NOTAS') 
 @ApiBearerAuth('token-acesso')
-@Controller('NOTAS')
+@Controller('notas-fiscais')
 @UseGuards(RolesGuard) 
 export class NotasFiscaisController {
   
   constructor(private readonly notasFiscaisService: NotasFiscaisService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Lança uma nova nota fiscal com arquivo PDF opcional' })
-  @ApiConsumes('multipart/form-data') 
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: { type: 'string', format: 'binary' },
-        numero_nf: { type: 'number' },
-        fornecedor: { type: 'string' },
-        data_vencimento: { type: 'string', format: 'date' },
-        valor_total: { type: 'number' },
-        quant_parcelas: { type: 'number' },
-        status: { type: 'number' },
-        obra: { type: 'string', description: 'ID da Obra' }
-      },
-    },
-  })
-  @UseInterceptors(FileInterceptor('file')) 
-  async criar(
-    @Body() dados: CreateNotasFiscaiDto, 
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    const notaParaSalvar: any = { 
-      ...dados,
-      obra: { id: dados.obra } 
-    };
-    return await this.notasFiscaisService.inserir(notaParaSalvar, file);
+  @ApiOperation({ summary: 'Lança uma nova nota fiscal (Apenas dados)' })
+  @ApiResponse({ status: 201, description: 'Nota fiscal criada com sucesso.', type: Notas })
+  async create(@Body() createNotasFiscaiDto: CreateNotasFiscaiDto) {
+    // A validação completa do DTO acontece aqui automaticamente!
+    return await this.notasFiscaisService.create(createNotasFiscaiDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Lista as notas fiscais e exibe o link do PDF no JSON' })
-  async buscarTodas() {
-    return await this.notasFiscaisService.listar();
+  @ApiOperation({ summary: 'Lista todas as notas fiscais com os dados da obra' })
+  @ApiResponse({ status: 200, type: [Notas] })
+  async findAll() {
+    return await this.notasFiscaisService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Detalhes de uma nota fiscal com o link do PDF' })
-  async buscarUma(@Param('id') id: string) {
-    return await this.notasFiscaisService.buscarPorId(id);
+  @ApiOperation({ summary: 'Detalhes de uma nota fiscal pelo ID' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, type: Notas })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.notasFiscaisService.findOne(id);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Atualizar apenas os dados da nota fiscal' })
-  async atualizar(
-    @Param('id') id: string, 
-    @Body() nota: UpdateNotasFiscaiDto 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar os dados da nota, status ou inserir parecer' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Nota atualizada com sucesso.' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @Body() updateNotasFiscaiDto: UpdateNotasFiscaiDto 
   ) {
-    return await this.notasFiscaisService.alterar(id, nota as any);
+    return await this.notasFiscaisService.update(id, updateNotasFiscaiDto);
   }
 
-  @Put(':id/upload-pdf')
-  @ApiOperation({ summary: 'Substituir ou adicionar apenas o arquivo PDF da nota fiscal' })
+  @Patch(':id/arquivos')
+  @ApiOperation({ summary: 'Fazer o upload e anexar o ficheiro PDF à nota fiscal' })
+  @ApiParam({ name: 'id', format: 'uuid' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @ApiBody({
-    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary', description: 'Ficheiro PDF da Nota' } } },
   })
-  async atualizarPdf(
-    @Param('id') id: string,
+  async uploadArquivo(
+    @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (!file) throw new BadRequestException('Nenhum arquivo enviado.');
-    await this.notasFiscaisService.substituirArquivoPdf(id, file);
-    return { msg: 'Arquivo PDF atualizado com sucesso!' };
+    if (!file) {
+      throw new BadRequestException('Nenhum ficheiro foi enviado na requisição.');
+    }
+
+    // TODO: A sua lógica do Supabase entra aqui no futuro.
+    // Exemplo: const urlPdfGerado = await this.supabaseService.upload(file);
+    const urlMocada = 'https://supabase.com/caminho/ficticio/nota.pdf';
+
+    await this.notasFiscaisService.substituirArquivos(id, { url_pdf: urlMocada });
+    
+    return { mensagem: 'Ficheiro PDF atualizado e vinculado à nota com sucesso!' };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Excluir uma nota fiscal e seu PDF' })
-  async remover(@Param('id') id: string) {
-    return await this.notasFiscaisService.excluir(id);
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Excluir uma nota fiscal (Soft Delete)' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    await this.notasFiscaisService.remove(id);
+    return { mensagem: 'Nota fiscal removida com sucesso.' };
   }
 }
+
+
+// import { 
+//   Controller, Get, Post, Body, Param, Delete, UseInterceptors, 
+//   UploadedFile, BadRequestException, Put, UseGuards, 
+//   InternalServerErrorException
+// } from '@nestjs/common';
+// import { NotasFiscaisService } from './notas-fiscais.service';
+// import { FileInterceptor } from '@nestjs/platform-express';
+// import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+// import { RolesGuard } from '../common/guards/roles.guard';
+
+// import { CreateNotasFiscaiDto } from './dto/create-notas-fiscai.dto';
+// import { UpdateNotasFiscaiDto } from './dto/update-notas-fiscai.dto';
+
+// @ApiTags('NOTAS') 
+// @ApiBearerAuth('token-acesso')
+// @Controller('NOTAS')
+// @UseGuards(RolesGuard) 
+// export class NotasFiscaisController {
+  
+//   constructor(private readonly notasFiscaisService: NotasFiscaisService) {}
+
+//   @Post()
+//   @ApiOperation({ summary: 'Lança uma nova nota fiscal com arquivo PDF opcional' })
+//   @ApiConsumes('multipart/form-data') 
+//   @ApiBody({
+//     schema: {
+//       type: 'object',
+//       properties: {
+//         file: { type: 'string', format: 'binary' },
+//         numero_nf: { type: 'number' },
+//         fornecedor: { type: 'string' },
+//         data_vencimento: { type: 'string', format: 'date' },
+//         valor_total: { type: 'number' },
+//         quant_parcelas: { type: 'number' },
+//         status: { type: 'number' },
+//         obra: { type: 'string', description: 'ID da Obra' }
+//       },
+//     },
+//   })
+//   @UseInterceptors(FileInterceptor('file')) 
+//   async criar(
+//     @Body() dados: CreateNotasFiscaiDto, 
+//     @UploadedFile() file: Express.Multer.File
+//   ) {
+//     const notaParaSalvar: any = { 
+//       ...dados,
+//       obra: { id: dados.obra } 
+//     };
+//     return await this.notasFiscaisService.inserir(notaParaSalvar, file);
+//   }
+
+//   @Get()
+//   @ApiOperation({ summary: 'Lista as notas fiscais e exibe o link do PDF no JSON' })
+//   async buscarTodas() {
+//     return await this.notasFiscaisService.listar();
+//   }
+
+//   @Get(':id')
+//   @ApiOperation({ summary: 'Detalhes de uma nota fiscal com o link do PDF' })
+//   async buscarUma(@Param('id') id: string) {
+//     return await this.notasFiscaisService.buscarPorId(id);
+//   }
+
+//   @Put(':id')
+//   @ApiOperation({ summary: 'Atualizar apenas os dados da nota fiscal' })
+//   async atualizar(
+//     @Param('id') id: string, 
+//     @Body() nota: UpdateNotasFiscaiDto 
+//   ) {
+//     return await this.notasFiscaisService.alterar(id, nota as any);
+//   }
+
+//   @Put(':id/upload-pdf')
+//   @ApiOperation({ summary: 'Substituir ou adicionar apenas o arquivo PDF da nota fiscal' })
+//   @ApiConsumes('multipart/form-data')
+//   @UseInterceptors(FileInterceptor('file'))
+//   @ApiBody({
+//     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+//   })
+//   async atualizarPdf(
+//     @Param('id') id: string,
+//     @UploadedFile() file: Express.Multer.File,
+//   ) {
+//     if (!file) throw new BadRequestException('Nenhum arquivo enviado.');
+//     await this.notasFiscaisService.substituirArquivoPdf(id, file);
+//     return { msg: 'Arquivo PDF atualizado com sucesso!' };
+//   }
+
+//   @Delete(':id')
+//   @ApiOperation({ summary: 'Excluir uma nota fiscal e seu PDF' })
+//   async remover(@Param('id') id: string) {
+//     return await this.notasFiscaisService.excluir(id);
+//   }
+// }
 
 
 

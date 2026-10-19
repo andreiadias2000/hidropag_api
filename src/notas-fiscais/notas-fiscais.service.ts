@@ -1,30 +1,60 @@
-// notas-fiscais.service.ts
+
+//src/notas-fiscais/notas-fiscais.service.ts
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notas } from './entities/notas-fiscais.entity';
+import { CreateNotasFiscaiDto } from './dto/create-notas-fiscai.dto';
+import { UpdateNotasFiscaiDto } from './dto/update-notas-fiscai.dto';
+import { Obras } from '../obras-empreendimentos/entities/obras-empreendimento.entity';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 
 @Injectable()
 export class NotasFiscaisService {
   constructor(
     @InjectRepository(Notas)
-    private repository: Repository<Notas>,
-    private notificacoesService: NotificacoesService,
+    private readonly repository: Repository<Notas>,
+
+    @InjectRepository(Obras)
+    private readonly obrasRepository: Repository<Obras>,
+
+    private readonly notificacoesService: NotificacoesService,
   ) {}
 
-  // 1. FUNÇÃO DE INSERIR (Com o envio de E-mail)
-  async inserir(dto: any, file?: any) {
-    const novaNota = this.repository.create(dto as any);
-    const notaSalva: any = await this.repository.save(novaNota);
+  // 1. FUNÇÃO DE CRIAR (Com validação de Obra e E-mail)
+  async create(dados: CreateNotasFiscaiDto): Promise<Notas> {
+    // Definimos explicitamente que pode ser a entidade Obras ou vazio (undefined)
+    let obraVinculada: Obras | undefined = undefined;
 
+    // Se informou obraId, validar se a obra existe
+    if (dados.obraId) {
+      const obra = await this.obrasRepository.findOne({
+        where: { id: dados.obraId },
+      });
+      if (!obra) {
+        throw new NotFoundException(`A obra informada (ID: ${dados.obraId}) não foi encontrada.`);
+      }
+      obraVinculada = obra;
+    }
+
+    // Cria a instância usando apenas o DTO
+    const novaNota = this.repository.create(dados);
+    
+    // Injeta a obra validada com segurança
+    if (obraVinculada) {
+      novaNota.obra = obraVinculada;
+    }
+
+    // Guarda na base de dados
+    const notaSalva = await this.repository.save(novaNota);
+
+    // Disparo de notificação para a diretoria
     const emailDiretoria = 'diretoria@hidropag.com.br';
-
     await this.notificacoesService.notificarNovaNota(
       emailDiretoria,
-      notaSalva.fornecedor,
-      Number(notaSalva.valor_total)
+      notaSalva.fornecedor || 'Fornecedor não identificado',
+      Number(notaSalva.valor_total),
     );
 
     return notaSalva;
@@ -38,45 +68,145 @@ export class NotasFiscaisService {
       'Fornecedor de Teste Ltda', 
       999.99
     );
-    return { mensagem: 'Teste disparado! Olhe o seu terminal e a sua caixa de entrada.' };
+    return { mensagem: 'Teste disparado! Verifique o seu terminal e a sua caixa de entrada.' };
   }
 
-  // --- AS FUNÇÕES QUE FALTAVAM ---
-
   // 3. LISTAR TODAS AS NOTAS
-  async listar() {
-    return await this.repository.find();
+  async findAll(): Promise<Notas[]> {
+    return await this.repository.find({
+      relations: ['obra'], // Traz os detalhes da obra no JSON
+      order: { createdAt: 'DESC' },
+    });
   }
 
   // 4. BUSCAR UMA NOTA POR ID
-  async buscarPorId(id: string) {
-    const nota = await this.repository.findOne({ where: { id: id as any } });
+  async findOne(id: string): Promise<Notas> {
+    const nota = await this.repository.findOne({
+      where: { id },
+      relations: ['obra'],
+    });
+    
     if (!nota) {
-      throw new NotFoundException('Nota fiscal não encontrada.');
+      throw new NotFoundException(`Nota fiscal com ID "${id}" não encontrada.`);
     }
     return nota;
   }
 
-  // 5. ATUALIZAR DADOS DA NOTA
-  async alterar(id: string, dto: any) {
-    await this.repository.update(id, dto);
-    return this.buscarPorId(id);
+  // 5. ATUALIZAR DADOS DA NOTA E PARECERES
+  async update(id: string, dados: UpdateNotasFiscaiDto): Promise<Notas> {
+    const nota = await this.findOne(id);
+
+    // Se estiver a alterar a obra, validar a nova obra
+    if (dados.obraId && dados.obraId !== nota.obraId) {
+      const obraExiste = await this.obrasRepository.findOne({
+        where: { id: dados.obraId },
+      });
+      if (!obraExiste) {
+        throw new NotFoundException(`Nova obra informada (ID: ${dados.obraId}) não encontrada.`);
+      }
+      nota.obra = obraExiste;
+    }
+
+    this.repository.merge(nota, dados);
+    return await this.repository.save(nota);
   }
 
-  // 6. SUBSTITUIR O ARQUIVO PDF
-  async substituirArquivoPdf(id: string, file: any) {
-    // Se você guarda o nome/caminho do arquivo no banco (ex: coluna "arquivo_pdf"), 
-    // a lógica de atualização entra aqui. Deixei uma resposta padrão de sucesso.
-    // Exemplo: await this.repository.update(id, { arquivo_pdf: file.filename });
-    return { mensagem: 'Arquivo PDF recebido e processado com sucesso.' };
+  // 6. SUBSTITUIR OU ATUALIZAR FICHEIROS (PDF/XML)
+  async substituirArquivos(id: string, urls: { url_pdf?: string; url_xml?: string }): Promise<Notas> {
+    const nota = await this.findOne(id);
+    
+    if (urls.url_pdf) nota.url_pdf = urls.url_pdf;
+    if (urls.url_xml) nota.url_xml = urls.url_xml;
+    nota.tem_anexo = true;
+
+    return await this.repository.save(nota);
   }
 
-  // 7. EXCLUIR NOTA
-  async excluir(id: string) {
-    await this.repository.delete(id);
-    return { mensagem: 'Nota fiscal excluída com sucesso.' };
+  // 7. EXCLUIR NOTA (Soft Delete)
+  async remove(id: string): Promise<void> {
+    const nota = await this.findOne(id);
+    await this.repository.softRemove(nota);
   }
 }
+
+
+// import { Injectable, NotFoundException } from '@nestjs/common';
+// import { InjectRepository } from '@nestjs/typeorm';
+// import { Repository } from 'typeorm';
+// import { Notas } from './entities/notas-fiscais.entity';
+// import { NotificacoesService } from '../notificacoes/notificacoes.service';
+
+// @Injectable()
+// export class NotasFiscaisService {
+//   constructor(
+//     @InjectRepository(Notas)
+//     private repository: Repository<Notas>,
+//     private notificacoesService: NotificacoesService,
+//   ) {}
+
+//   // 1. FUNÇÃO DE INSERIR (Com o envio de E-mail)
+//   async inserir(dto: any, file?: any) {
+//     const novaNota = this.repository.create(dto as any);
+//     const notaSalva: any = await this.repository.save(novaNota);
+
+//     const emailDiretoria = 'diretoria@hidropag.com.br';
+
+//     await this.notificacoesService.notificarNovaNota(
+//       emailDiretoria,
+//       notaSalva.fornecedor,
+//       Number(notaSalva.valor_total)
+//     );
+
+//     return notaSalva;
+//   }
+
+//   // 2. FUNÇÃO DE TESTE DE E-MAIL
+//   async testarEmail() {
+//     const meuEmail = 'seu_email_pessoal@gmail.com'; 
+//     await this.notificacoesService.notificarNovaNota(
+//       meuEmail, 
+//       'Fornecedor de Teste Ltda', 
+//       999.99
+//     );
+//     return { mensagem: 'Teste disparado! Olhe o seu terminal e a sua caixa de entrada.' };
+//   }
+
+//   // --- AS FUNÇÕES QUE FALTAVAM ---
+
+//   // 3. LISTAR TODAS AS NOTAS
+//   async listar() {
+//     return await this.repository.find();
+//   }
+
+//   // 4. BUSCAR UMA NOTA POR ID
+//   async buscarPorId(id: string) {
+//     const nota = await this.repository.findOne({ where: { id: id as any } });
+//     if (!nota) {
+//       throw new NotFoundException('Nota fiscal não encontrada.');
+//     }
+//     return nota;
+//   }
+
+//   // 5. ATUALIZAR DADOS DA NOTA
+//   async alterar(id: string, dto: any) {
+//     await this.repository.update(id, dto);
+//     return this.buscarPorId(id);
+//   }
+
+//   // 6. SUBSTITUIR O ARQUIVO PDF
+//   async substituirArquivoPdf(id: string, file: any) {
+//     // Se você guarda o nome/caminho do arquivo no banco (ex: coluna "arquivo_pdf"), 
+//     // a lógica de atualização entra aqui. Deixei uma resposta padrão de sucesso.
+//     // Exemplo: await this.repository.update(id, { arquivo_pdf: file.filename });
+//     return { mensagem: 'Arquivo PDF recebido e processado com sucesso.' };
+//   }
+
+//   // 7. EXCLUIR NOTA
+//   async excluir(id: string) {
+//     await this.repository.delete(id);
+//     return { mensagem: 'Nota fiscal excluída com sucesso.' };
+//   }
+// }
 
  
 

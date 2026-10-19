@@ -11,12 +11,19 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 
 import { Filiais } from '../../filiais/entities/filiais.entity';
+// Certifique-se de que o nome da classe exportada no ficheiro de notas fiscais é "Notas"
 import { Notas } from '../../notas-fiscais/entities/notas-fiscais.entity';
 import { Cliente } from '../../clientes/entities/cliente.entity';
+
+// Utilitário para converter decimais da base de dados (string) para número no TypeScript
+const decimalTransformer = {
+  to: (value: number) => value,
+  from: (value: string) => parseFloat(value),
+};
 
 @Entity('OBRAS')
 export class Obras {
@@ -41,18 +48,16 @@ export class Obras {
   nome_obra!: string;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '12.345.67890/12',
     description: 'CNO - Cadastro Nacional de Obras',
-    required: false,
   })
   cno?: string;
 
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Rua Ramiro Barcelos, 910 - Porto Alegre/RS',
     description: 'Endereço e localização da obra',
-    required: false,
   })
   endereco_localizacao?: string;
 
@@ -64,10 +69,7 @@ export class Obras {
     precision: 12,
     scale: 2,
     default: 0,
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    },
+    transformer: decimalTransformer,
   })
   @ApiProperty({
     example: 150000.0,
@@ -75,14 +77,26 @@ export class Obras {
   })
   valor_previsto!: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: decimalTransformer,
+  })
   @ApiProperty({
     example: 150000.0,
     description: 'Orçamento total previsto',
   })
   orcamento_previsto!: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: decimalTransformer,
+  })
   @ApiProperty({
     example: 50000.0,
     description: 'Custo acumulado da obra',
@@ -99,7 +113,7 @@ export class Obras {
   @Column({ type: 'boolean', default: true })
   @ApiProperty({
     example: true,
-    description: 'Indica se o registro da obra está ativo',
+    description: 'Indica se o registo da obra está ativo',
   })
   ativo!: boolean;
 
@@ -107,7 +121,7 @@ export class Obras {
   // 4. RELACIONAMENTOS (CHAVES ESTRANGEIRAS)
   // ---------------------------------------------------------------------------
 
-  // Filial (Obrigatório: Toda obra pertence a uma filial)
+  // Filial (Obrigatório: Toda a obra pertence a uma filial)
   @Column({ type: 'uuid' })
   filialId!: string;
 
@@ -128,10 +142,9 @@ export class Obras {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'clienteId' })
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: () => Cliente,
     description: 'Cliente proprietário da obra',
-    required: false,
   })
   cliente?: Cliente;
 
@@ -153,3 +166,158 @@ export class Obras {
   @Exclude()
   deletedAt?: Date;
 }
+
+
+// import {
+//   Column,
+//   Entity,
+//   PrimaryGeneratedColumn,
+//   OneToMany,
+//   ManyToOne,
+//   JoinColumn,
+//   DeleteDateColumn,
+//   CreateDateColumn,
+//   UpdateDateColumn,
+// } from 'typeorm';
+// import { ApiProperty } from '@nestjs/swagger';
+// import { Exclude } from 'class-transformer';
+
+// import { Filiais } from '../../filiais/entities/filiais.entity';
+// import { Notas } from '../../notas-fiscais/entities/notas-fiscais.entity';
+// import { Cliente } from '../../clientes/entities/cliente.entity';
+
+// @Entity('OBRAS')
+// export class Obras {
+//   // ---------------------------------------------------------------------------
+//   // 1. IDENTIFICAÇÃO E CHAVE PRIMÁRIA
+//   // ---------------------------------------------------------------------------
+//   @PrimaryGeneratedColumn('uuid')
+//   @ApiProperty({
+//     example: '550e8400-e29b-41d4-a716-446655440000',
+//     description: 'Identificador único da obra (UUID v4)',
+//   })
+//   id!: string;
+
+//   // ---------------------------------------------------------------------------
+//   // 2. DADOS PRINCIPAIS E CADASTRAIS
+//   // ---------------------------------------------------------------------------
+//   @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
+//   @ApiProperty({
+//     example: 'Hospital Moinhos de Vento',
+//     description: 'Nome único da obra',
+//   })
+//   nome_obra!: string;
+
+//   @Column({ type: 'varchar', length: 30, nullable: true })
+//   @ApiProperty({
+//     example: '12.345.67890/12',
+//     description: 'CNO - Cadastro Nacional de Obras',
+//     required: false,
+//   })
+//   cno?: string;
+
+//   @Column({ type: 'text', nullable: true })
+//   @ApiProperty({
+//     example: 'Rua Ramiro Barcelos, 910 - Porto Alegre/RS',
+//     description: 'Endereço e localização da obra',
+//     required: false,
+//   })
+//   endereco_localizacao?: string;
+
+//   // ---------------------------------------------------------------------------
+//   // 3. CAMPOS FINANCEIROS E DE STATUS
+//   // ---------------------------------------------------------------------------
+//   @Column({
+//     type: 'decimal',
+//     precision: 12,
+//     scale: 2,
+//     default: 0,
+//     transformer: {
+//       to: (value: number) => value,
+//       from: (value: string) => parseFloat(value),
+//     },
+//   })
+//   @ApiProperty({
+//     example: 150000.0,
+//     description: 'Valor orçado/previsto para a obra',
+//   })
+//   valor_previsto!: number;
+
+//   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+//   @ApiProperty({
+//     example: 150000.0,
+//     description: 'Orçamento total previsto',
+//   })
+//   orcamento_previsto!: number;
+
+//   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+//   @ApiProperty({
+//     example: 50000.0,
+//     description: 'Custo acumulado da obra',
+//   })
+//   custo_acumulado!: number;
+
+//   @Column({ type: 'smallint', default: 1 })
+//   @ApiProperty({
+//     example: 1,
+//     description: 'Status: 1 (Em Andamento), 2 (Pausada), 3 (Finalizada)',
+//   })
+//   status!: number;
+
+//   @Column({ type: 'boolean', default: true })
+//   @ApiProperty({
+//     example: true,
+//     description: 'Indica se o registro da obra está ativo',
+//   })
+//   ativo!: boolean;
+
+//   // ---------------------------------------------------------------------------
+//   // 4. RELACIONAMENTOS (CHAVES ESTRANGEIRAS)
+//   // ---------------------------------------------------------------------------
+
+//   // Filial (Obrigatório: Toda obra pertence a uma filial)
+//   @Column({ type: 'uuid' })
+//   filialId!: string;
+
+//   @ManyToOne(() => Filiais, (filial) => filial.obras, { nullable: false })
+//   @JoinColumn({ name: 'filialId' })
+//   @ApiProperty({
+//     type: () => Filiais,
+//     description: 'Filial responsável pela obra',
+//   })
+//   filial!: Filiais;
+
+//   // Cliente (Opcional: 1 Cliente -> N Obras)
+//   @Column({ type: 'uuid', nullable: true })
+//   clienteId?: string;
+
+//   @ManyToOne(() => Cliente, (cliente) => cliente.obras, {
+//     nullable: true,
+//     onDelete: 'SET NULL',
+//   })
+//   @JoinColumn({ name: 'clienteId' })
+//   @ApiProperty({
+//     type: () => Cliente,
+//     description: 'Cliente proprietário da obra',
+//     required: false,
+//   })
+//   cliente?: Cliente;
+
+//   // Notas Fiscais (1 Obra -> N Notas)
+//   @OneToMany(() => Notas, (nota) => nota.obra)
+//   @Exclude()
+//   notas?: Notas[];
+
+//   // ---------------------------------------------------------------------------
+//   // 5. AUDITORIA E SOFT DELETE
+//   // ---------------------------------------------------------------------------
+//   @CreateDateColumn({ name: 'created_at' })
+//   createdAt!: Date;
+
+//   @UpdateDateColumn({ name: 'updated_at' })
+//   updatedAt!: Date;
+
+//   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+//   @Exclude()
+//   deletedAt?: Date;
+// }
