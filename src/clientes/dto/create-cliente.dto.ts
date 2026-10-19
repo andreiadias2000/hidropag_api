@@ -10,7 +10,7 @@ import {
   ValidateIf,
   Length,
   Matches,
-  IsNumber,
+  IsNumberString, // <-- Adicionado aqui para validar números em formato de texto
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TipoPessoa } from '../entities/cliente.entity'; // Certifique-se de que o Enum está exportado na entidade
@@ -92,17 +92,16 @@ export class CreateClienteDto {
     example: '5551987654321',
     description: 'Telefone comercial ou celular',
   })
-  @IsNumber()
+  @IsNumberString({}, { message: 'O telefone deve conter apenas números, sem letras ou símbolos.' })
   @IsOptional()
-  telefone?: number;
+  telefone?: string; // <-- Agora como texto para guardar os zeros e compatibilizar com a base de dados
 
   @ApiPropertyOptional({
     example: 'Rua das Flores, 123',
     description: 'Endereço do cliente',
   })
-  @IsString()
+  @IsString({ message: 'O endereço deve ser um texto válido.' })
   @IsNotEmpty({ message: 'O endereço é obrigatório.' })
-  @IsString({ message: 'O endereço não deve ter caracteres especiais.' })
   endereco?: string;
 
   @ApiPropertyOptional({
@@ -112,8 +111,6 @@ export class CreateClienteDto {
   @IsString()
   @IsOptional()
   complemento?: string;
-
-
 
   @ApiPropertyOptional({
     example: true,

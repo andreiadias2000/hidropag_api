@@ -1,3 +1,5 @@
+//src/clientes/entities/cliente.entity.ts
+
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -22,7 +24,8 @@ export class Cliente {
   @ApiProperty({ description: 'Identificador único do cliente (UUID)' })
   id!: string;
 
-  @Column({ type: 'enum', enum: TipoPessoa })
+  // --- A MÁGICA ACONTECE AQUI: Adicionámos o "default: TipoPessoa.PJ" ---
+  @Column({ type: 'enum', enum: TipoPessoa, default: TipoPessoa.PJ })
   @ApiProperty({ enum: TipoPessoa, description: 'PF ou PJ' })
   tipo_pessoa!: TipoPessoa;
 
@@ -49,15 +52,15 @@ export class Cliente {
   @ApiPropertyOptional({ example: 'contato@construtorasul.com.br', description: 'E-mail de contato' })
   email?: string;
 
-  @Column({ type: 'number', nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiPropertyOptional({ example: '(51) 98765-4321', description: 'Telefone comercial ou celular' })
-  telefone?: number;
+  telefone?: string;
 
-  @Column({ type: 'varchar', nullable: true }) // Corrigido de 'string' para 'varchar'
+  @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Rua das Flores, 123', description: 'Endereço do cliente' })
   endereco?: string;
 
-  @Column({ type: 'varchar', nullable: true }) // Corrigido de 'string' para 'varchar' e removido o default booleano
+  @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Apto 201', description: 'Complemento do endereço' })
   complemento?: string;
 

@@ -3,17 +3,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotasFiscaisService } from './notas-fiscais.service';
 import { NotasFiscaisController } from './notas-fiscais.controller';
 import { Notas } from './entities/notas-fiscais.entity';
-import { NotificacoesModule } from '../notificacoes/notificacoes.module'; // Importação que faltava
+import { Obras } from '../obras-empreendimentos/entities/obras-empreendimento.entity';
+import { NotificacoesModule } from '../notificacoes/notificacoes.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notas]), // Corrigido para corresponder à linha 6
-    NotificacoesModule // Adicionado aqui
+    // O segredo está aqui: avisamos o módulo que ele agora acede às Obras também!
+    TypeOrmModule.forFeature([Notas, Obras]), 
+    NotificacoesModule,
   ],
   controllers: [NotasFiscaisController],
   providers: [NotasFiscaisService],
 })
 export class NotasFiscaisModule {}
+
 
 
 // import { Module } from '@nestjs/common';

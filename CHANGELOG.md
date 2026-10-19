@@ -2,8 +2,8 @@
 
 ## [17/10/2026] - Atualização de Obras e Notas Fiscais
 ### Adicionado / Refatorado
-- **Módulo de Obras:** Inclusão de campos de controlo financeiro (`valor_previsto`, `orcamento_previsto`, `custo_acumulado`) na Entidade e DTOs.
-- **Módulo de Notas Fiscais:** Adicionados os campos `justificativa_lancamento` e `parecer_aprovacao` para melhorar a comunicação entre a equipa.
+- **Módulo de Obras:** Inclusão de campos de controle financeiro (`valor_previsto`, `orcamento_previsto`, `custo_acumulado`) na Entidade e DTOs.
+- **Módulo de Notas Fiscais:** Adicionados os campos `justificativa_lancamento` e `parecer_aprovacao` para melhorar a comunicação entre a equipe.
 - **Notas Fiscais:** Novo enumerador de status (`StatusNota`), incluindo a opção `DEVOLVIDA_PARA_EXPLICACAO`.
 - **Notas Fiscais:** Preparação da base de dados para receber tanto ficheiros PDF (`url_pdf`) como XML (`url_xml`).
 - **Segurança e Arquitetura:** Refatoração dos Services para validar a existência de chaves estrangeiras (Obra, Filial, Cliente) antes da gravação. Uso de rotas `@Patch` para atualizações parciais.
