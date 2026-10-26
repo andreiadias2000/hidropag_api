@@ -11,7 +11,7 @@ async function bootstrap() {
   // 👇 ADICIONADO CONFIGURAÇÃO DE CORS
   app.enableCors({
     origin: ['https://hidropagfront.vercel.app', 'http://localhost:3000', 'http://localhost:5173','http://127.0.0.1:5174'],
-    methods: 'GET,HEAD,PUT,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
   // Ela obriga a API a validar os dados de entrada usando os DTOs.
