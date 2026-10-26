@@ -18,11 +18,7 @@ export class CreateNotasFiscaiDto {
   @IsNotEmpty({ message: 'O número da NF é obrigatório' })
   numero_nf!: number; // <-- Sem o '?' (É obrigatório)
 
-  @ApiProperty({ example: 'Ferragem do João' })
-  @IsString()
-  @IsNotEmpty({ message: 'O nome do fornecedor é obrigatório' })
-  fornecedor!: string; // <-- Sem o '?'
-
+  
   @ApiProperty({ example: '2026-05-20' })
   @IsDateString({}, { message: 'Envie uma data válida no formato YYYY-MM-DD' }) // <-- Valida data real
   @IsNotEmpty({ message: 'A data de vencimento é obrigatória' })
@@ -48,6 +44,11 @@ export class CreateNotasFiscaiDto {
   @IsNumber()
   @IsOptional()
   status?: number; // <-- Mantém o '?'
+
+  @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440001', description: 'ID do Fornecedor vinculado' })
+  @IsUUID()
+  @IsOptional()
+  fornecedorId?: string;
 
   @ApiProperty({ example: "123e4567-e89b-12d3-a456-426614174000", description: 'ID da Obra' })
   @IsUUID('all', { message: 'O ID da obra deve ser um UUID válido' }) // <-- Impede o envio de textos aleatórios

@@ -1,5 +1,10 @@
 # 📢 Recados e Histórico de Alterações
 
+## [25/10/26] - adicinado entidade fonecedor 
+## [25/10/26]refatorado a entiade notas fiscais 
+## teste unitario em NOtas 
+
+
 ## [04/10/2026] - Refatoração de Obras e Adição de Testes Unitários
 Olá, Andreia! Deixei anotado aqui o resumo do que foi ajustado nesta branch:
 

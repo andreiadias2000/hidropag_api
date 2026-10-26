@@ -20,6 +20,9 @@ import { AprovaçoesController } from './aprovaçoes/aprovaçoes.controller';
 import { PerfisController } from './perfil/entities/perfil.controller';
 import { ClientesModule } from './clientes/clientes.module';
 import { ClientesController } from './clientes/clientes.controller';
+import { FornecedorModule } from './fornecedores/fornecedores.module'; // ✅ Certo
+import { Fornecedor } from './fornecedores/entities/fornecedor.entity';
+import { FornecedorController } from './fornecedores/fornecedores.controller';
 
 @Module({
   imports: [
@@ -30,7 +33,8 @@ import { ClientesController } from './clientes/clientes.controller';
     AprovaçoesModule,
     ObrasEmpreendimentosModule,
     PerfisModule,
-    ClientesModule, // Módulo de Perfis adicionado corretamente
+    ClientesModule,
+    FornecedorModule, // Módulo de Perfis adicionado corretamente
   ],
 })
 export class AppModule implements NestModule {
@@ -52,6 +56,7 @@ export class AppModule implements NestModule {
         FiliaisController,
         PerfisController,
         AprovaçoesController,
-        ClientesController      );
+        ClientesController,
+        FornecedorController    );
   }
 }

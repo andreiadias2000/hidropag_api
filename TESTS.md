@@ -62,3 +62,6 @@ Abra o terminal na raiz do projeto (`hidropag_api`) e execute conforme o objetiv
 Executa todas as suítes e exibe o resumo:
 ```bash
 npm run test
+
+### 4 adicinando teste unitario para forcedor 
+## 5 adicinado teste unitario em Notas 
