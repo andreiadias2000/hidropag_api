@@ -1,13 +1,7 @@
-// src/clientes/clientes.service.ts
-
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
-import { Cliente } from './entities/cliente.entity';
+import { Cliente, TipoPessoa } from './entities/cliente.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
@@ -15,77 +9,76 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 export class ClientesService {
   constructor(
     @InjectRepository(Cliente)
-    private readonly repository: Repository<Cliente>,
+    private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    // 1. Se informou CNPJ/CPF, valida se já existe outro cliente com o mesmo documento
-    if (createClienteDto.cnpj_cpf) {
-      const documentoExiste = await this.repository.findOne({
-        where: { cnpj_cpf: createClienteDto.cnpj_cpf },
-      });
-
-      if (documentoExiste) {
-        throw new BadRequestException(
-          `Já existe um cliente cadastrado com o CNPJ/CPF "${createClienteDto.cnpj_cpf}".`,
-        );
+    // 1. Validação de duplicidade de CPF (Apenas se for Pessoa Física)
+    if (createClienteDto.tipo_pessoa === TipoPessoa.PF && createClienteDto.cpf) {
+      const existe = await this.clienteRepository.findOne({ where: { cpf: createClienteDto.cpf } });
+      if (existe) {
+        throw new BadRequestException(`Já existe um cliente cadastrado com o CPF "${createClienteDto.cpf}".`);
       }
     }
 
-    // 2. Cria a instância e salva no banco
-    const novoCliente = this.repository.create(createClienteDto);
-    return await this.repository.save(novoCliente);
+    // 2. Validação de duplicidade de CNPJ (Apenas se for Pessoa Jurídica)
+    if (createClienteDto.tipo_pessoa === TipoPessoa.PJ && createClienteDto.cnpj) {
+      const existe = await this.clienteRepository.findOne({ where: { cnpj: createClienteDto.cnpj } });
+      if (existe) {
+        throw new BadRequestException(`Já existe um cliente cadastrado com o CNPJ "${createClienteDto.cnpj}".`);
+      }
+    }
+
+    // 3. Cria a entidade e salva no banco de dados
+    const novoCliente = this.clienteRepository.create(createClienteDto);
+    return await this.clienteRepository.save(novoCliente);
   }
 
   async findAll(): Promise<Cliente[]> {
-    return await this.repository.find({
-      relations: ['obras'], // Traz as obras vinculadas ao cliente se necessário
-      order: { createdAt: 'DESC' },
+    return await this.clienteRepository.find({
+      order: { createdAt: 'DESC' }, 
     });
   }
 
   async findOne(id: string): Promise<Cliente> {
-    const cliente = await this.repository.findOne({
-      where: { id },
-      relations: ['obras'],
-    });
-
+    const cliente = await this.clienteRepository.findOne({ where: { id } });
+    
     if (!cliente) {
-      throw new NotFoundException(`Cliente com ID "${id}" não encontrado.`);
+      throw new NotFoundException(`Cliente com ID ${id} não encontrado.`);
     }
-
+    
     return cliente;
   }
 
   async update(id: string, updateClienteDto: UpdateClienteDto): Promise<Cliente> {
     const cliente = await this.findOne(id);
 
-    // Se estiver atualizando o documento, garante que outro cliente não esteja usando
-    if (
-      updateClienteDto.cnpj_cpf &&
-      updateClienteDto.cnpj_cpf !== cliente.cnpj_cpf
-    ) {
-      const documentoDuplicado = await this.repository.findOne({
-        where: { cnpj_cpf: updateClienteDto.cnpj_cpf, id: Not(id) },
+    // Validação de duplicidade na edição de CPF
+    if (updateClienteDto.cpf && updateClienteDto.cpf !== cliente.cpf) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cpf: updateClienteDto.cpf, id: Not(id) } 
       });
-
-      if (documentoDuplicado) {
-        throw new BadRequestException(
-          `O documento "${updateClienteDto.cnpj_cpf}" já está em uso por outro cliente.`,
-        );
+      if (existe) {
+        throw new BadRequestException(`O CPF "${updateClienteDto.cpf}" já está em uso por outro cliente.`);
       }
     }
 
-    Object.assign(cliente, updateClienteDto);
-    return await this.repository.save(cliente);
+    // Validação de duplicidade na edição de CNPJ
+    if (updateClienteDto.cnpj && updateClienteDto.cnpj !== cliente.cnpj) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cnpj: updateClienteDto.cnpj, id: Not(id) } 
+      });
+      if (existe) {
+        throw new BadRequestException(`O CNPJ "${updateClienteDto.cnpj}" já está em uso por outro cliente.`);
+      }
+    }
+
+    this.clienteRepository.merge(cliente, updateClienteDto);
+    return await this.clienteRepository.save(cliente);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    await this.findOne(id);
-
-    // Realiza o soft delete preenchendo a coluna deleted_at
-    await this.repository.softDelete(id);
-
-    return { message: 'Cliente removido com sucesso.' };
+  async remove(id: string): Promise<void> {
+    const cliente = await this.findOne(id);
+    await this.clienteRepository.softRemove(cliente);
   }
 }

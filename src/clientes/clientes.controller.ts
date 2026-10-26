@@ -31,13 +31,13 @@ export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Cadastrar um novo cliente' })
+  @ApiOperation({ summary: 'Cadastrar um novo cliente (Pessoa Física ou Jurídica)' })
   @ApiResponse({
     status: 201,
     description: 'Cliente cadastrado com sucesso.',
     type: Cliente,
   })
-  @ApiResponse({ status: 400, description: 'Dados inválidos ou CNPJ/CPF já existente.' })
+  @ApiResponse({ status: 400, description: 'Dados de validação inválidos ou CPF/CNPJ já cadastrado.' })
   create(@Body() createClienteDto: CreateClienteDto) {
     return this.clientesService.create(createClienteDto);
   }
@@ -81,6 +81,7 @@ export class ClientesController {
     description: 'Cliente atualizado com sucesso.',
     type: Cliente,
   })
+  @ApiResponse({ status: 400, description: 'Dados inválidos ou CPF/CNPJ já pertencente a outro cliente.' })
   @ApiResponse({ status: 404, description: 'Cliente não encontrado.' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
