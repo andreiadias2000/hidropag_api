@@ -9,9 +9,13 @@ import {
   ValidateIf,
   Length,
   Matches, 
-  Min 
+  Min,
+  IsUUID,     // 👈 1. Adicionado para validar UUIDs (filialId, clienteId)
+  IsNumber, 
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
 
 export class CreateObrasEmpreendimentoDto {
   @ApiProperty({ example: 'Hospital Moinhos de Vento' })
