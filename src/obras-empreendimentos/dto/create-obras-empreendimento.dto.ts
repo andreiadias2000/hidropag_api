@@ -1,5 +1,16 @@
 // src/obras-empreendimentos/dto/create-obras-empreendimento.dto.ts
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsNumber, IsBoolean, Min } from 'class-validator';
+import { 
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsEnum,
+  ValidateIf,
+  Length,
+  Matches, 
+  Min 
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateObrasEmpreendimentoDto {
