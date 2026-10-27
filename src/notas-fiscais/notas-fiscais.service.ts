@@ -58,7 +58,13 @@ export class NotasFiscaisService {
         tem_anexo: true,
         arquivoPdf: true, 
         obra: { id: true, nome_obra: true },
-        fornecedor: { id: true, razao_social: true, cnpj_cpf: true }
+        fornecedor: { 
+          id: true, 
+          razao_social: true, 
+          nome: true, 
+          cnpj: true, 
+          cpf: true 
+        } // 👈 Corrigido de cnpj_cpf para cnpj e cpf (e incluído nome)
       },
       relations: ['obra', 'fornecedor'], 
     });
@@ -112,7 +118,15 @@ export class NotasFiscaisService {
         tem_anexo: true, 
         arquivoPdf: true, 
         obra: { id: true, nome_obra: true, ativo: true },
-        fornecedor: { id: true, razao_social: true, cnpj_cpf: true, email: true, telefone: true }
+        fornecedor: { 
+          id: true, 
+          razao_social: true, 
+          nome: true, 
+          cnpj: true, 
+          cpf: true, 
+          email: true, 
+          telefone: true 
+        } // 👈 Corrigido de cnpj_cpf para os novos campos da entidade Fornecedor
       }
     });
 
