@@ -16,17 +16,20 @@ export class CreateObrasEmpreendimentoDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000', required: false })
   @IsUUID()
   @IsOptional()
-  clienteId?: string;
+  clienteId!: string;
 
-  @ApiProperty({ example: '12.345.67890/12', required: false })
+  @ApiProperty({ example: '123456789012', required: true })
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\D/g, '') : value))
   @IsString()
-  @IsOptional()
-  cno?: string;
+  @IsNotEmpty({ message: 'O CNO é obrigatório.' }) // Agora é obrigatório
+  @Length(12, 12, { message: 'O CNO deve conter exatamente 12 números.' })
+  @Matches(/^\d{12}$/, { message: 'O CNO deve conter apenas números.' })
+  cno!: string;
 
   @ApiProperty({ example: 'Rua Ramiro Barcelos, 910 - Porto Alegre/RS', required: false })
   @IsString()
   @IsOptional()
-  endereco_localizacao?: string;
+  endereco_localizacao!: string;
 
   @ApiProperty({ example: 150000.0, default: 0 })
   @IsNumber()

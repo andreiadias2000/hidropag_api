@@ -47,7 +47,7 @@ export class CreateFornecedorDto {
 
   @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
-  @MaxLength(20)
+  @Length(11, 11, { message: 'O telefone deve conter exatamente 11 dígitos (com DDD e o 9º dígito).' })
   @IsOptional()
   @ApiPropertyOptional({ example: '51999998888', description: 'Telefone somente números' })
   telefone?: string;

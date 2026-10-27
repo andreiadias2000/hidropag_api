@@ -91,9 +91,11 @@ export class CreateClienteDto {
     example: '51987654321',
     description: 'Telefone comercial ou celular (somente números)',
   })
-  @Transform(({ value }) => (value ? value.replace(/\D/g, '') : value)) // Limpa qualquer máscara do telefone automaticamente
+  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
+  @Length(11, 11, { message: 'O telefone deve conter exatamente 11 dígitos (com DDD e o 9º dígito).' })
   @IsOptional()
+  @ApiPropertyOptional({ example: '51999998888', description: 'Telefone somente números' })
   telefone?: string;
 
   @ApiPropertyOptional({
