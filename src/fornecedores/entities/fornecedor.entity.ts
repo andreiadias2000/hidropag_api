@@ -1,3 +1,4 @@
+//src/fornecedores/entities/fornecedor.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -49,10 +50,7 @@ export class Fornecedor {
   @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail de contato' })
   email?: string;
 
-  @Transform(({ value }) => (value ? value.replace(/\D/g, '') : value)) // Remove tudo que não for número
-  @IsString()
-  @Length(11, 11, { message: 'O telefone deve conter exatamente 11 dígitos (com DDD e o 9º dígito).' })
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 11, nullable: true }) // Ajustado para 11 caracteres no banco
   @ApiPropertyOptional({ example: '51999998888', description: 'Telefone (somente números)' })
   telefone?: string;
 
