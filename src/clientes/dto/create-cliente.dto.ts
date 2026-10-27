@@ -10,10 +10,9 @@ import {
   ValidateIf,
   Length,
   Matches,
-  IsNumberString, // <-- Adicionado aqui para validar números em formato de texto
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { TipoPessoa } from '../entities/cliente.entity'; // Certifique-se de que o Enum está exportado na entidade
+import { TipoPessoa } from '../entities/cliente.entity';
 
 export class CreateClienteDto {
   @ApiProperty({
@@ -45,7 +44,7 @@ export class CreateClienteDto {
   @ValidateIf((obj) => obj.tipo_pessoa === TipoPessoa.PJ)
   @IsNotEmpty({ message: 'O CNPJ é obrigatório para Pessoa Jurídica.' })
   @IsString()
-  @Transform(({ value }) => (value ? value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : value)) // Limpa pontuação
+  @Transform(({ value }) => (value ? value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : value))
   @Length(14, 14, { message: 'O CNPJ deve ter exatamente 14 caracteres após a remoção da máscara.' })
   @Matches(/^[A-Z0-9]{12}[0-9]{2}$/, {
     message: 'CNPJ inválido. Os 12 primeiros caracteres podem ser alfanuméricos, mas os 2 últimos devem ser numéricos.',
@@ -72,7 +71,7 @@ export class CreateClienteDto {
   @ValidateIf((obj) => obj.tipo_pessoa === TipoPessoa.PF)
   @IsNotEmpty({ message: 'O CPF é obrigatório para Pessoa Física.' })
   @IsString()
-  @Transform(({ value }) => (value ? value.replace(/[^0-9]/g, '') : value)) // Limpa pontuação (deixa só números)
+  @Transform(({ value }) => (value ? value.replace(/[^0-9]/g, '') : value))
   @Length(11, 11, { message: 'O CPF deve ter exatamente 11 números após a remoção da máscara.' })
   cpf?: string;
 
@@ -89,19 +88,20 @@ export class CreateClienteDto {
   email?: string;
 
   @ApiPropertyOptional({
-    example: '5551987654321',
-    description: 'Telefone comercial ou celular',
+    example: '51987654321',
+    description: 'Telefone comercial ou celular (somente números)',
   })
-  @IsNumberString({}, { message: 'O telefone deve conter apenas números, sem letras ou símbolos.' })
+  @Transform(({ value }) => (value ? value.replace(/\D/g, '') : value)) // Limpa qualquer máscara do telefone automaticamente
+  @IsString()
   @IsOptional()
-  telefone?: string; // <-- Agora como texto para guardar os zeros e compatibilizar com a base de dados
+  telefone?: string;
 
   @ApiPropertyOptional({
     example: 'Rua das Flores, 123',
     description: 'Endereço do cliente',
   })
   @IsString({ message: 'O endereço deve ser um texto válido.' })
-  @IsNotEmpty({ message: 'O endereço é obrigatório.' })
+  @IsOptional() // Alterado para opcional caso nem todo cliente exija endereço imediato, ajuste se necessário
   endereco?: string;
 
   @ApiPropertyOptional({

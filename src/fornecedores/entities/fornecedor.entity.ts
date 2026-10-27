@@ -1,41 +1,84 @@
-// src/fornecedores/entities/fornecedor.entity.ts
-
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany, }
-from 'typeorm'; import { ApiProperty } from '@nestjs/swagger'; 
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import { Notas } from '../../notas-fiscais/entities/notas-fiscais.entity';
+
+export enum TipoPessoa {
+  PF = 'PF',
+  PJ = 'PJ',
+}
 
 @Entity({ name: 'FORNECEDORES', schema: 'public' })
 export class Fornecedor {
-@PrimaryGeneratedColumn('uuid') 
-@ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000', description: 'ID único do fornecedor' }) 
-id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  @ApiProperty({ description: 'Identificador único do fornecedor (UUID)' })
+  id!: string;
 
-@Column({ type: 'varchar', nullable: false }) 
-@ApiProperty({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social ou Nome do Fornecedor' }) 
-razao_social!: string;
+  @Column({ type: 'enum', enum: TipoPessoa, default: TipoPessoa.PJ })
+  @ApiProperty({ enum: TipoPessoa, description: 'PF ou PJ' })
+  tipo_pessoa!: TipoPessoa;
 
-@Column({ type: 'varchar', unique: true, nullable: true }) 
-@ApiProperty({ example: '12.345.678/0001-90', description: 'CNPJ ou CPF único do fornecedor', required: false }) 
-cnpj_cpf?: string;
+  // --- PESSOA JURÍDICA ---
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social do fornecedor' })
+  razao_social?: string;
 
-@Column({ type: 'varchar', nullable: true }) 
-@ApiProperty({ example: 'contato@fornecedorsilva.com.br', description: 'E-mail principal', required: false }) 
-email?: string;
+  @Column({ type: 'varchar', length: 14, unique: true, nullable: true })
+  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ (somente números)' })
+  cnpj?: string;
 
-@Column({ type: 'varchar', nullable: true }) 
-@ApiProperty({ example: '(51) 99999-8888', description: 'Telefone de contato', required: false }) 
-telefone?: string;
+  // --- PESSOA FÍSICA ---
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Carlos Alberto', description: 'Nome completo do fornecedor' })
+  nome?: string;
 
-@Column({ type: 'boolean', default: true }) 
-@ApiProperty({ example: true, description: 'Indica se o fornecedor está ativo' }) 
-ativo!: boolean;
+  @Column({ type: 'varchar', length: 11, unique: true, nullable: true })
+  @ApiPropertyOptional({ example: '12345678900', description: 'CPF (somente números)' })
+  cpf?: string;
 
-// --- RELACIONAMENTO: Um Fornecedor possui várias Notas Fiscais --- 
-@OneToMany(() => Notas, (nota) => nota.fornecedor) notas?: Notas[];
+  // --- COMUM ---
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail de contato' })
+  email?: string;
 
-// --- CONTROLE DE AUDITORIA E SOFT DELETE --- 
-@CreateDateColumn({ type: 'timestamp', name: 'created_at' }) createdAt!: Date;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiPropertyOptional({ example: '51999998888', description: 'Telefone (somente números)' })
+  telefone?: string;
 
-@UpdateDateColumn({ type: 'timestamp', name: 'updated_at' }) updatedAt!: Date;
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Endereço' })
+  endereco?: string;
 
-@DeleteDateColumn({ type: 'timestamp', name: 'deleted_at', nullable: true }) deletedAt?: Date; }
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Galpão B', description: 'Complemento' })
+  complemento?: string;
+
+  @Column({ type: 'boolean', default: true })
+  ativo!: boolean;
+
+  @Column({ type: 'integer', nullable: true })
+  @ApiPropertyOptional({ example: 4567, description: 'Código do sistema Elevor' })
+  codigo_elevor?: number;
+
+  @OneToMany(() => Notas, (nota) => nota.fornecedor)
+  @Exclude()
+  notas?: Notas[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  @Exclude()
+  deletedAt?: Date;
+}

@@ -1,35 +1,74 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { TipoPessoa } from '../entities/fornecedor.entity';
 
 export class CreateFornecedorDto {
-  @ApiProperty({ example: 'Materiais de Construção Silva LTDA', 
-    description: 'Razão social do fornecedor' 
-})
-  @IsString()
-  @IsNotEmpty()
-  razao_social!: string;
+  @ApiProperty({ enum: TipoPessoa, example: TipoPessoa.PJ, description: 'Tipo de pessoa (PF ou PJ)' })
+  @IsEnum(TipoPessoa)
+  @IsNotEmpty({ message: 'O tipo de pessoa é obrigatório.' })
+  tipo_pessoa!: TipoPessoa;
 
-  @ApiProperty({ example: '12.345.678/0001-90', 
-    description: 'CNPJ ou CPF do fornecedor', required: false })
+  // --- PESSOA JURÍDICA (Obrigatório se tipo_pessoa === 'PJ') ---
+  @ValidateIf((o) => o.tipo_pessoa === TipoPessoa.PJ)
+  @IsNotEmpty({ message: 'A razão social é obrigatória para Pessoa Jurídica.' })
   @IsString()
-  @IsOptional()
-  cnpj_cpf?: string;
+  @ApiPropertyOptional({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social (Obrigatório para PJ)' })
+  razao_social?: string;
 
-  @ApiProperty({ example: 'contato@silva.com.br', 
-    description: 'E-mail de contato', required: false })
-  @IsEmail()
+  @ValidateIf((o) => o.tipo_pessoa === TipoPessoa.PJ)
+  @IsNotEmpty({ message: 'O CNPJ é obrigatório para Pessoa Jurídica.' })
+  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
+  @IsString()
+  @MaxLength(14)
+  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ somento números (Obrigatório para PJ)' })
+  cnpj?: string;
+
+  // --- PESSOA FÍSICA (Obrigatório se tipo_pessoa === 'PF') ---
+  @ValidateIf((o) => o.tipo_pessoa === TipoPessoa.PF)
+  @IsNotEmpty({ message: 'O nome é obrigatório para Pessoa Física.' })
+  @IsString()
+  @ApiPropertyOptional({ example: 'Carlos Alberto', description: 'Nome completo (Obrigatório para PF)' })
+  nome?: string;
+
+  @ValidateIf((o) => o.tipo_pessoa === TipoPessoa.PF)
+  @IsNotEmpty({ message: 'O CPF é obrigatório para Pessoa Física.' })
+  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
+  @IsString()
+  @MaxLength(11)
+  @ApiPropertyOptional({ example: '12345678900', description: 'CPF somente números (Obrigatório para PF)' })
+  cpf?: string;
+
+  // --- COMUM (Opcionais) ---
+  @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail' })
+  @IsString()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ example: '(51) 99999-8888', 
-    description: 'Telefone de contato', required: false })
+  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
+  @MaxLength(20)
   @IsOptional()
+  @ApiPropertyOptional({ example: '51999998888', description: 'Telefone somente números' })
   telefone?: string;
 
-  @ApiProperty({ example: true, description: 'Indica se o fornecedor está ativo', 
-    default: true, required: false })
+  @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Endereço' })
+  @IsString()
+  @IsOptional()
+  endereco?: string;
+
+  @ApiPropertyOptional({ example: 'Galpão B', description: 'Complemento' })
+  @IsString()
+  @IsOptional()
+  complemento?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Ativo', default: true })
   @IsBoolean()
   @IsOptional()
   ativo?: boolean;
+
+  @ApiPropertyOptional({ example: 4567, description: 'Código do sistema Elevor' })
+  @IsInt()
+  @IsOptional()
+  codigo_elevor?: number;
 }

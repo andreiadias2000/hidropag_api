@@ -53,7 +53,7 @@ export class Cliente {
   email?: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  @ApiPropertyOptional({ example: '(51) 98765-4321', description: 'Telefone comercial ou celular' })
+  @ApiPropertyOptional({ example: '51987654321', description: 'Telefone comercial ou celular' })
   telefone?: string;
 
   @Column({ type: 'varchar', nullable: true })
