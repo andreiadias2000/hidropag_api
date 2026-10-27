@@ -1,4 +1,14 @@
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import { 
+  IsBoolean, 
+  IsEnum, 
+  IsInt, 
+  IsNotEmpty, 
+  IsOptional, 
+  IsString, 
+  MaxLength, 
+  ValidateIf,
+  Length, 
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { TipoPessoa } from '../entities/fornecedor.entity';
