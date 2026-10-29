@@ -1,3 +1,5 @@
+//src/notas-fiscais/dto/create-notas-fiscai.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { 
   IsNumber, 

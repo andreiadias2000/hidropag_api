@@ -8,17 +8,22 @@ export class RolesGuard implements CanActivate {
     const usuario = request['user']; 
     console.log("-----------------------------------------");
     console.log("DADOS DO USUÁRIO DENTRO DO JWT:", usuario);
-    console.log("NOME DO PERFIL CAPTURADO:", usuario?.perfil?.nome);
     console.log("MÉTODO HTTP:", request.method);
-    console.log("-----------------------------------------");
     
     // Se o middleware não injetou o usuário por algum motivo, bloqueia por segurança
     if (!usuario) {
       throw new ForbiddenException('Acesso negado: Usuário não identificado na requisição.');
     }
 
-    // Busca o nome do perfil (lidando se ele vier como objeto completo ou string direta)
-    const nomePerfil = usuario.perfil?.nome || usuario.perfil;
+    // Busca o nome do perfil de forma segura
+    const perfilBruto = usuario.perfil?.nome || usuario.perfil || '';
+    
+    // Converte para texto e tudo minúsculo para não dar erro de maiúscula/minúscula!
+    const nomePerfil = String(perfilBruto).toLowerCase().trim();
+    
+    console.log("NOME DO PERFIL PADRONIZADO PARA VALIDAÇÃO:", nomePerfil);
+    console.log("-----------------------------------------");
+
     const metodoHttp = request.method; 
 
     // REGRA EXCLUSIVA: Só barra se for 'leitor' e tentar algo diferente de GET
