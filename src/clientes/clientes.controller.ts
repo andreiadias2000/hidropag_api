@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,10 +24,12 @@ import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { Cliente } from './entities/cliente.entity';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('CLIENTES')
 @ApiBearerAuth('token-acesso')
 @Controller('clientes')
+@UseGuards(RolesGuard)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
