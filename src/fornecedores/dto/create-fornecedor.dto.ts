@@ -30,8 +30,8 @@ export class CreateFornecedorDto {
   @IsNotEmpty({ message: 'O CNPJ é obrigatório para Pessoa Jurídica.' })
   @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
-  @MaxLength(14)
-  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ somento números (Obrigatório para PJ)' })
+  @Length(14, 14, { message: 'O CNPJ deve ter exatamente 14 dígitos.' })
+  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ somente números (Obrigatório para PJ)' })
   cnpj?: string;
 
   // --- PESSOA FÍSICA (Obrigatório se tipo_pessoa === 'PF') ---
@@ -45,11 +45,11 @@ export class CreateFornecedorDto {
   @IsNotEmpty({ message: 'O CPF é obrigatório para Pessoa Física.' })
   @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
-  @MaxLength(11)
+  @Length(11, 11, { message: 'O CPF deve ter exatamente 11 dígitos.' })
   @ApiPropertyOptional({ example: '12345678900', description: 'CPF somente números (Obrigatório para PF)' })
   cpf?: string;
 
-  // --- COMUM (Opcionais) ---
+  // --- CONTATO ---
   @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail' })
   @IsString()
   @IsOptional()
@@ -62,16 +62,46 @@ export class CreateFornecedorDto {
   @ApiPropertyOptional({ example: '51999998888', description: 'Telefone somente números' })
   telefone?: string;
 
-  @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Endereço' })
+  // --- ENDEREÇO COMPLETO ---
+  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
   @IsString()
+  @Length(8, 8, { message: 'O CEP deve conter exatamente 8 dígitos.' })
   @IsOptional()
-  endereco?: string;
+  @ApiPropertyOptional({ example: '90000000', description: 'CEP somente números' })
+  cep?: string;
 
-  @ApiPropertyOptional({ example: 'Galpão B', description: 'Complemento' })
   @IsString()
   @IsOptional()
+  @ApiPropertyOptional({ example: 'Cristo Redentor', description: 'Bairro' })
+  bairro?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '1500', description: 'Número do imóvel' })
+  numero?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'Porto Alegre', description: 'Cidade' })
+  cidade?: string;
+
+  @IsString()
+  @Length(2, 2, { message: 'O estado deve conter exatamente 2 caracteres (UF).' })
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'RS', description: 'Estado (UF)' })
+  estado?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'Sala 402', description: 'Complemento do endereço' })
   complemento?: string;
 
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Logradouro / Endereço' })
+  endereco?: string;
+
+  // --- CONFIGURAÇÕES ---
   @ApiPropertyOptional({ example: true, description: 'Ativo', default: true })
   @IsBoolean()
   @IsOptional()

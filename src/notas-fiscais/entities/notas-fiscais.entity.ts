@@ -3,7 +3,7 @@
 import { Column, Entity, PrimaryGeneratedColumn,ManyToOne,OneToMany, JoinColumn } from "typeorm";
 import { APROVACOES } from "../../aprovaçoes/entities/aprovaçoe.entity";
 import { Obras } from "../../obras-empreendimentos/entities/obras-empreendimento.entity";
-import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Fornecedor } from "../../fornecedores/entities/fornecedor.entity";
 
 @Entity('NOTAS')
@@ -37,7 +37,15 @@ export class Notas {
     @ApiProperty({ example: 0,description: 'Status (0: Pendente, 1: Aprovada, 2: Recusada)' }) // Ex: 0 para pendente, 1 para pago
     status?: number;
 
-        
+    @Column({ type: 'text', nullable: true })
+    @ApiPropertyOptional({
+        example: 'Material entregue diretamente no canteiro de obras da torre A.', 
+        description: 'Observações gerais sobre a nota fiscal' 
+    })
+    observacao?: string;
+
+  // --- RELACIONAMENTOS ---
+            
     @Column({ name: 'url_pdf', type: 'varchar', nullable: true })
     @ApiProperty({ example: 'https://exemplo.com/arquivo.pdf', description: 'URL do PDF anexado' })
     arquivoPdf?: string;
@@ -47,10 +55,15 @@ export class Notas {
     @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440001', description: 'ID do Fornecedor' })
     fornecedorId?: string;
 
+
+    /////////////////////////////////////////////////////////////////////
     @ManyToOne(() => Fornecedor, (fornecedor) => fornecedor.notas, { onDelete: 'SET NULL', nullable: true })
     @JoinColumn({ name: 'fornecedorId' })
     @ApiProperty({ type: () => Fornecedor, description: 'Fornecedor emissor da nota fiscal' })
     fornecedor?: Fornecedor;
+
+
+    
 
     
     // Relacionamento: Muitas notas pertencem a uma única Obra

@@ -27,7 +27,7 @@ export class Fornecedor {
   @ApiProperty({ enum: TipoPessoa, description: 'PF ou PJ' })
   tipo_pessoa!: TipoPessoa;
 
-  // --- PESSOA JURÍDICA ---
+  // --- PESSOA JURÍDICA --------------------------------------------
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social do fornecedor' })
   razao_social?: string;
@@ -36,7 +36,7 @@ export class Fornecedor {
   @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ (somente números)' })
   cnpj?: string;
 
-  // --- PESSOA FÍSICA ---
+  // --- PESSOA FÍSICA --------------------------------
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Carlos Alberto', description: 'Nome completo do fornecedor' })
   nome?: string;
@@ -45,7 +45,7 @@ export class Fornecedor {
   @ApiPropertyOptional({ example: '12345678900', description: 'CPF (somente números)' })
   cpf?: string;
 
-  // --- COMUM ---
+  // --- COMUM ---------------------------------------------
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail de contato' })
   email?: string;
@@ -53,14 +53,35 @@ export class Fornecedor {
   @Column({ type: 'varchar', length: 11, nullable: true }) // Ajustado para 11 caracteres no banco
   @ApiPropertyOptional({ example: '51999998888', description: 'Telefone (somente números)' })
   telefone?: string;
+  // endreço  completo -----------------------------------------------------------
+  @Column({ type: 'varchar', length: 8, nullable: true })
+  @ApiPropertyOptional({ example: '90000000', description: 'CEP (somente números)' })
+  cep?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Cristo Redentor', description: 'Bairro' })
+  bairro?: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiPropertyOptional({ example: '1500', description: 'Número do imóvel' })
+  numero?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Porto Alegre', description: 'Cidade' })
+  cidade?: string;
+
+  @Column({ type: 'varchar', length: 2, nullable: true })
+  @ApiPropertyOptional({ example: 'RS', description: 'Estado (UF)' })
+  estado?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  @ApiPropertyOptional({ example: 'Sala 402', description: 'Complemento do endereço' })
+  complemento?: string;
 
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Endereço' })
   endereco?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  @ApiPropertyOptional({ example: 'Galpão B', description: 'Complemento' })
-  complemento?: string;
+  ///////////////////////////////////////////////////////////////////////////////////
 
   @Column({ type: 'boolean', default: true })
   ativo!: boolean;

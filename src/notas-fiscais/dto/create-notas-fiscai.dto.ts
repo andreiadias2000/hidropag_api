@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { 
   IsNumber, 
   IsString, 
@@ -50,9 +50,18 @@ export class CreateNotasFiscaiDto {
   @IsOptional()
   fornecedorId?: string;
 
+  @ApiPropertyOptional({ 
+    example: 'Nota referente à compra de cimento para a fundação.', 
+    description: 'Observações da nota fiscal' 
+  })
+  @IsString({ message: 'A observação deve ser um texto válido.' })
+  @IsOptional()
+  observacao?: string;
+
   @ApiProperty({ example: "123e4567-e89b-12d3-a456-426614174000", description: 'ID da Obra' })
   @IsUUID('all', { message: 'O ID da obra deve ser um UUID válido' }) // <-- Impede o envio de textos aleatórios
   @IsNotEmpty({ message: 'A nota fiscal precisa estar vinculada a uma obra' })
   obra!: string; // <-- Sem o '?'
+
   
 }

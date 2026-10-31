@@ -38,7 +38,7 @@ export class CreateClienteDto {
   razao_social?: string;
 
   @ApiPropertyOptional({
-    example: '12.345.678/0001-90',
+    example: '12345678000190',
     description: 'CNPJ do cliente (Pode ser enviado com ou sem máscara)',
   })
   @ValidateIf((obj) => obj.tipo_pessoa === TipoPessoa.PJ)
@@ -65,7 +65,7 @@ export class CreateClienteDto {
   nome?: string;
 
   @ApiPropertyOptional({
-    example: '123.456.789-00',
+    example: '12345678900',
     description: 'CPF do cliente (Pode ser enviado com ou sem máscara)',
   })
   @ValidateIf((obj) => obj.tipo_pessoa === TipoPessoa.PF)
@@ -89,30 +89,59 @@ export class CreateClienteDto {
 
   @ApiPropertyOptional({
     example: '51987654321',
-    description: 'Telefone comercial ou celular (somente números)',
+    description: 'Telefone comercial ou celular (somente números, 11 dígitos)',
   })
-  @Transform(({ value }) => typeof value === 'string' ? value.replace(/\D/g, '') : value)
+  @Transform(({ value }) => (value ? value.replace(/\D/g, '') : value))
   @IsString()
   @Length(11, 11, { message: 'O telefone deve conter exatamente 11 dígitos (com DDD e o 9º dígito).' })
   @IsOptional()
-  @ApiPropertyOptional({ example: '51999998888', description: 'Telefone somente números' })
   telefone?: string;
 
-  @ApiPropertyOptional({
-    example: 'Rua das Flores, 123',
-    description: 'Endereço do cliente',
-  })
-  @IsString({ message: 'O endereço deve ser um texto válido.' })
-  @IsOptional() // Alterado para opcional caso nem todo cliente exija endereço imediato, ajuste se necessário
-  endereco?: string;
+  // ==========================================
+  // ENDEREÇO COMPLETO ESTRUTURADO
+  // ==========================================
 
-  @ApiPropertyOptional({
-    example: 'Apto 1001',
-    description: 'Complemento do endereço',
-  })
+  @ApiPropertyOptional({ example: '90000000', description: 'CEP (somente 8 números)' })
+  @Transform(({ value }) => (value ? value.replace(/\D/g, '') : value))
+  @IsString()
+  @Length(8, 8, { message: 'O CEP deve conter exatamente 8 dígitos.' })
+  @IsOptional()
+  cep?: string;
+
+  @ApiPropertyOptional({ example: 'Cristo Redentor', description: 'Bairro' })
+  @IsString()
+  @IsOptional()
+  bairro?: string;
+
+  @ApiPropertyOptional({ example: '1500', description: 'Número do imóvel' })
+  @IsString()
+  @IsOptional()
+  numero?: string;
+
+  @ApiPropertyOptional({ example: 'Porto Alegre', description: 'Cidade' })
+  @IsString()
+  @IsOptional()
+  cidade?: string;
+
+  @ApiPropertyOptional({ example: 'RS', description: 'Estado (UF com 2 letras)' })
+  @IsString()
+  @Length(2, 2, { message: 'O estado deve conter exatamente 2 caracteres (UF).' })
+  @IsOptional()
+  estado?: string;
+
+  @ApiPropertyOptional({ example: 'Apto 1001', description: 'Complemento do endereço' })
   @IsString()
   @IsOptional()
   complemento?: string;
+
+  @ApiPropertyOptional({ example: 'Rua das Flores, 123', description: 'Logradouro / Endereço' })
+  @IsString()
+  @IsOptional()
+  endereco?: string;
+
+  // ==========================================
+  // OUTROS CAMPOS
+  // ==========================================
 
   @ApiPropertyOptional({
     example: true,

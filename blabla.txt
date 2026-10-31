@@ -1,3 +1,27 @@
+### nf 
+adicinar camapo observações nf 
+ver cor vermelha nas vencidas 
+####
+
+### 
+fornecedores / cientes 
+add endreço completo
+###
+
+
+####
+fronte pode usar api no cep para preencher automatico pelo cep 
+#####
+filiais tem api funcinando para auto preencimento por cpf
+#####
+####
+verificar perfil leitor e outros pra ver o que ouve 
+###
+
+
+
+
+
 senacrshidropag
 # Adiciona todas as modificações
 git add .
