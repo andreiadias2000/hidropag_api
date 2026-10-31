@@ -6,27 +6,44 @@ export class RolesGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const usuario = request['user']; 
-    console.log("-----------------------------------------");
-    console.log("DADOS DO USUÁRIO DENTRO DO JWT:", usuario);
-    console.log("NOME DO PERFIL CAPTURADO:", usuario?.perfil?.nome);
-    console.log("MÉTODO HTTP:", request.method);
-    console.log("-----------------------------------------");
-    
-    // Se o middleware não injetou o usuário por algum motivo, bloqueia por segurança
+
     if (!usuario) {
       throw new ForbiddenException('Acesso negado: Usuário não identificado na requisição.');
     }
 
-    // Busca o nome do perfil (lidando se ele vier como objeto completo ou string direta)
-    const nomePerfil = usuario.perfil?.nome || usuario.perfil;
+    const nomePerfil = (usuario.perfil?.nome || usuario.perfil)?.toLowerCase();
     const metodoHttp = request.method; 
+    const rotaUrl = request.url.toLowerCase(); // Ex: /notas-fiscais/aprovar ou /obras/123
 
-    // REGRA EXCLUSIVA: Só barra se for 'leitor' e tentar algo diferente de GET
-    if (nomePerfil === 'leitor' && metodoHttp !== 'GET') {
-      throw new ForbiddenException(`Acesso negado: O perfil 'leitor' possui permissão apenas de visualização (GET).`);
+    console.log(`[RolesGuard] Usuário: ${usuario.email} | Perfil: ${nomePerfil} | Método: ${metodoHttp} | Rota: ${rotaUrl}`);
+
+    // 1. ROOT / ADMIN: Acesso total a tudo
+    if (nomePerfil === 'root' || nomePerfil === 'admin') {
+      return true;
     }
 
-    // Se for root, admin, ou se for uma requisição GET feita pelo leitor, o acesso é liberado!
-    return true;
+    // 2. LEITOR: Apenas visualização (GET)
+    if (nomePerfil === 'leitor') {
+      if (metodoHttp !== 'GET') {
+        throw new ForbiddenException("Acesso negado: O perfil 'leitor' possui permissão apenas de visualização.");
+      }
+      return true;
+    }
+
+    // 3. LANÇADOR: Pode cadastrar, editar e desativar, MAS NÃO PODE APROVAR nem excluir permanentemente de forma crítica (se houver rota específica)
+    if (nomePerfil === 'lancador') {
+      // Bloqueia se tentar acessar qualquer rota que contenha 'aprovar' ou 'aprovacao'
+      if (rotaUrl.includes('aprovar') || rotaUrl.includes('aprovacao')) {
+        throw new ForbiddenException("Acesso negado: O perfil 'lancador' não tem permissão para realizar aprovações.");
+      }
+      return true;
+    }
+
+    // 4. GESTOR: Faz tudo do lançador e tem acesso total às aprovações
+    if (nomePerfil === 'gestor') {
+      return true;
+    }
+
+    throw new ForbiddenException('Acesso negado: Perfil de usuário inválido ou não reconhecido.');
   }
 }
