@@ -13,7 +13,7 @@ export class RolesGuard implements CanActivate {
 
     const nomePerfil = (usuario.perfil?.nome || usuario.perfil)?.toLowerCase();
     const metodoHttp = request.method; 
-    const rotaUrl = request.url.toLowerCase(); // Ex: /notas-fiscais/aprovar ou /obras/123
+    const rotaUrl = request.url.toLowerCase(); 
 
     console.log(`[RolesGuard] Usuário: ${usuario.email} | Perfil: ${nomePerfil} | Método: ${metodoHttp} | Rota: ${rotaUrl}`);
 
@@ -30,9 +30,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    // 3. LANÇADOR: Pode cadastrar, editar e desativar, MAS NÃO PODE APROVAR nem excluir permanentemente de forma crítica (se houver rota específica)
+    // 3. LANÇADOR: Pode cadastrar, editar e desativar, MAS NÃO PODE APROVAR
     if (nomePerfil === 'lancador') {
-      // Bloqueia se tentar acessar qualquer rota que contenha 'aprovar' ou 'aprovacao'
       if (rotaUrl.includes('aprovar') || rotaUrl.includes('aprovacao')) {
         throw new ForbiddenException("Acesso negado: O perfil 'lancador' não tem permissão para realizar aprovações.");
       }
