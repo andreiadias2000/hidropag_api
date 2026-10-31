@@ -37,7 +37,9 @@ export class UsuariosService implements OnModuleInit {
     }
 
     // 2. Cria o usuário Root inicial
-    const emailRoot = 'admin@hidropag.com';
+    
+    const emailRoot = process.env.ROOT_EMAIL ;
+    const senhaRoot = process.env.ROOT_SENHA ;
     const rootExiste = await this.repository.findOne({ where: { email: emailRoot } });
 
     if (!rootExiste) {
@@ -45,7 +47,7 @@ export class UsuariosService implements OnModuleInit {
 
       // Correção do Erro: Verificamos se o perfil foi encontrado antes de criar o usuário
       if (perfilRoot) {
-        const senhaHashed = await this.hashService.gerarHash('Admin#2026');
+        const senhaHashed = await this.hashService.gerarHash(senhaRoot!);
 
         // Forçamos o tipo para DeepPartial para evitar o erro de sobrecarga
         const dadosUsuario = {

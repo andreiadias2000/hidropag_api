@@ -3,12 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { APROVACOES } from './entities/aprovaçoe.entity';
 import { CreateAprovaçoeDto } from './dto/create-aprovaçoe.dto';
+import { Notas } from '../notas-fiscais/entities/notas-fiscais.entity';
 
 @Injectable()
 export class AprovaçoesService {
   constructor(
     @InjectRepository(APROVACOES)
     private readonly repository: Repository<APROVACOES>,
+
+    @InjectRepository(Notas)
+    private readonly notaRepository: Repository<Notas>,
   ) {}
 
   // Salva uma nova decisão (Aprovar/Reprovar)
@@ -31,8 +35,27 @@ export class AprovaçoesService {
       usuario: { id: dto.usuario }
     });
 
-    return await this.repository.save(novaAprovacao);
+    const aprovacaoSalva = await this.repository.save(novaAprovacao);
+
+    // 4. SINCRONIZAÇÃO AUTOMÁTICA: Atualiza o status na tabela NOTAS
+    // Decisão: 1 = Aprovado (Status 1), 2 = Reprovado (Status 2)
+    if (dto.decisao !== undefined && dto.nota) {
+      let statusParaAtualizar = 0; // Padrão 0: Pendente
+
+      if (dto.decisao === 1) {
+        statusParaAtualizar = 1; // 1: Aprovada
+      } else if (dto.decisao === 2) {
+        statusParaAtualizar = 2; // 2: Recusada
+      }
+
+      await this.notaRepository.update(dto.nota, {
+        status: statusParaAtualizar
+      });
+    }
+
+    return aprovacaoSalva;
   }
+
 
   // 1. LISTAR COM FILTRO DE COLUNAS (Evita travar o Swagger)
   async listar(): Promise<APROVACOES[]> {
