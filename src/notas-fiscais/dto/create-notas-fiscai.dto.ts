@@ -39,7 +39,7 @@ export class CreateNotasFiscaiDto {
   @IsNotEmpty({ message: 'A quantidade de parcelas é obrigatória' })
   quant_parcelas!: number; // <-- Sem o '?'
 
-  @ApiProperty({ example: 0, description: '0 para pendente, 1 para pago', required: false })
+  @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
