@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AprovaçoesController } from './aprovaçoes.controller';
-import { AprovaçoesService } from './aprovaçoes.service';
+import { AprovaçoesController } from './aprovacoes.controller';
+import { AprovaçoesService } from './aprovacoes.service';
 import { beforeEach, describe } from 'node:test';
 
 describe('AprovaçoesController', () => {

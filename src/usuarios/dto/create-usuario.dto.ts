@@ -34,11 +34,11 @@ export class CreateUsuarioDto {
     id: string;
   };
 
-//   @ApiProperty({
-//     example: { id: 'uuid-da-filial' },
-//     description: 'Objeto contendo o ID da filial (opcional)',
-//     required: false,
-//   })
+  @ApiProperty({
+     example: { id: 'uuid-da-filial' },
+     description: 'Objeto contendo o ID da filial (opcional)',
+     required: false,
+   })
   @IsObject()
   @IsOptional()
   filial?: {

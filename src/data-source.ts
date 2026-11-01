@@ -4,7 +4,7 @@ import { Filiais } from "./filiais/entities/filiais.entity";
 import { Usuarios } from "./usuarios/entities/usuario.entity";
 import { Obras } from "./obras-empreendimentos/entities/obras-empreendimento.entity";
 import { Notas } from "./notas-fiscais/entities/notas-fiscais.entity";
-import { APROVACOES } from "./aprovaçoes/entities/aprovaçoe.entity";
+import { APROVACOES } from "./aprovaçoes/entities/aprovacoe.entity";
 import { Perfil } from "./perfil/entities/perfil.entity";
 import { Cliente } from "./clientes/entities/cliente.entity";
 import { Fornecedor } from "./fornecedores/entities/fornecedor.entity";

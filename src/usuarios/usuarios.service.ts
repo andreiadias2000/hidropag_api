@@ -38,8 +38,8 @@ export class UsuariosService implements OnModuleInit {
 
     // 2. Cria o usuário Root inicial
     
-    const emailRoot = process.env.ROOT_EMAIL ;
-    const senhaRoot = process.env.ROOT_SENHA ;
+    const emailRoot = process.env.ROOT_EMAIL || 'admin@hidropag.com' ;
+    const senhaRoot = process.env.ROOT_SENHA || 'Admin#2026' ;
     const rootExiste = await this.repository.findOne({ where: { email: emailRoot } });
 
     if (!rootExiste) {
@@ -87,8 +87,8 @@ export class UsuariosService implements OnModuleInit {
       nome: dados.nome,
       email: dados.email,
       senha: senhaCriptografada,
-      ativo: dados.ativo ?? true,
-      // REMOVIDO O NUMBER(): Agora passa a string/UUID diretamente
+      ativo: true,// 🔒 Fixo: todo novo usuário nasce ativo por padrão
+      
       perfil: dados.perfil ? ({ id: dados.perfil.id } as any) : undefined,
       filial: dados.filial ? ({ id: dados.filial.id } as any) : undefined,
     };
@@ -104,7 +104,7 @@ export class UsuariosService implements OnModuleInit {
     });
   }
 
-  async buscarPorId(id: number): Promise<Usuarios> {
+  async buscarPorId(id: string): Promise<Usuarios> {
     const usuario = await this.repository.findOne({
       where: { id },
       relations: ['filial', 'aprovacoes', 'perfil'],
@@ -116,27 +116,35 @@ export class UsuariosService implements OnModuleInit {
     return usuario;
   }
 
-  async alterar(id: number, usuario: Usuarios): Promise<void> {
-    const usuarioExiste = await this.buscarPorId(id);
-    
-    if (usuarioExiste) {
-      if (usuario.senha) {
-        usuario.senha = await this.hashService.gerarHash(usuario.senha);
-      }
-      
-      // Removemos o ID do objeto para evitar tentativa de alterar a chave primária
-      delete usuario.id; 
-      
-      await this.repository.update(id, usuario);
-    }
+  async alterar(id: string, dadosAtualizacao: Partial<Usuarios>): Promise<void> {
+  // 1. Verifica se o usuário existe (lança NotFound se não encontrar)
+  const usuarioExiste = await this.buscarPorId(id);
+
+  if (!usuarioExiste) {
+    throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
   }
 
-  async remove(id: number): Promise<void> {
+  // 2. Se houver nova senha, gera o hash criptografado
+  if (dadosAtualizacao.senha) {
+    dadosAtualizacao.senha = await this.hashService.gerarHash(dadosAtualizacao.senha);
+  } else {
+    // Garante que se a senha não foi enviada, ela não seja sobrescrita com vazia/undefined
+    delete dadosAtualizacao.senha;
+  }
+
+  // 3. Remove o ID de dentro do objeto para evitar conflito na chave primária
+  delete dadosAtualizacao.id;
+
+  // 4. Executa o update informando o ID explicitamente
+  await this.repository.update(id, dadosAtualizacao);
+  }
+
+  async remove(id: string): Promise<void> {
   const usuario = await this.repository.findOne({ where: { id } });
   if (!usuario) {
     throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
   }
 
   await this.repository.update(id, { ativo: false });
-}
+  }
 }

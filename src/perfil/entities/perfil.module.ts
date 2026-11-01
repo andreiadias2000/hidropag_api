@@ -12,4 +12,4 @@ import { PerfisController } from './perfil.controller';
   providers: [PerfisService],
   exports: [PerfisService, TypeOrmModule], // Exporta para o UsuariosService poder usar
 })
-export class PerfisModule {}
+export class PerfilModule {}

@@ -67,7 +67,7 @@ export class UsuariosController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar usuário por ID (Requer Token)' })
-  async buscarUm(@Param('id') id: number): Promise<Usuarios> {
+  async buscarUm(@Param('id') id: string): Promise<Usuarios> {
     return await this.usuariosService.buscarPorId(id);
   }
 
@@ -82,19 +82,20 @@ export class UsuariosController {
         nome: 'Ivan Silva',// depois adicionar a variavel do .env
         email: 'ivan@teste.com',
         senha: 'Admin#2026',
+        ativo: 'false',
         perfil: {
           id: '6fc13eec-a3fe-4fe4-811b-2563cb1b5f4c'
         }
       }
     }
   })
-  async atualizar(@Param('id') id: number, @Body() usuario: any): Promise<void> {
+  async atualizar(@Param('id') id: string, @Body() usuario: any): Promise<void> {
     await this.usuariosService.alterar(id, usuario);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir usuário (Requer Token)' })
   async deletar(@Param('id') id: string): Promise<void> {
-    return await this.usuariosService.remove(Number(id));
+    return await this.usuariosService.remove(id);
   }
 }

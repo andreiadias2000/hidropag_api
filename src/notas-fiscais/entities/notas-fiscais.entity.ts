@@ -1,7 +1,7 @@
 //notas-fiscais,entity.ts
 
 import { Column, Entity, PrimaryGeneratedColumn,ManyToOne,OneToMany, JoinColumn } from "typeorm";
-import { APROVACOES } from "../../aprovaçoes/entities/aprovaçoe.entity";
+import { APROVACOES } from "../../aprovaçoes/entities/aprovacoe.entity";
 import { Obras } from "../../obras-empreendimentos/entities/obras-empreendimento.entity";
 import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Fornecedor } from "../../fornecedores/entities/fornecedor.entity";

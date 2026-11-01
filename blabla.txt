@@ -1,3 +1,15 @@
+
+teste automatizado de todas entidades { }
+dto usuario estava sem o json do swager colocado para teste. 
+entidade perfil fora da pasta e não tem dto .
+usuario na entidade provacçoes estava como numero auterado no dto e na entidade 
+aprovações esta buscando a lista vazia 
+aprovações com Ç foi auterado.
+usurios estava usando numero, modificado para usar uuid, controler e service.
+fronte tem que arrumar as rotas e as requiciççoes 
+testar as rotas crud interiras no fronte para ver se as rotas estao funcinando.
+
+
 ### nf 
 adicinar camapo observações nf 
 ver cor vermelha nas vencidas 

@@ -1,14 +1,14 @@
 // usuario.entity.ts
 import { Column, Entity, PrimaryGeneratedColumn,OneToMany, ManyToOne, DeleteDateColumn, } from "typeorm";
 import { Filiais } from "../../filiais/entities/filiais.entity";
-import { APROVACOES } from "../../aprovaçoes/entities/aprovaçoe.entity";
+import { APROVACOES } from "../../aprovaçoes/entities/aprovacoe.entity";
 import { ApiProperty } from '@nestjs/swagger';
 import { Perfil } from "../../perfil/entities/perfil.entity";
 
 @Entity()
 export class Usuarios{
     @PrimaryGeneratedColumn("uuid")
-    id?: number;
+    id?: string;
 
     @Column()    
     nome?: string 

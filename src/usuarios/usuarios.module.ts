@@ -4,7 +4,7 @@ import { UsuariosService } from './usuarios.service';
 import { UsuariosController } from './usuarios.controller';
 import { Usuarios } from './entities/usuario.entity';
 import { Perfil } from '../perfil/entities/perfil.entity'; // Entidade de Perfil
-import { PerfisModule } from '../perfil/entities/perfil.module'; // Módulo de Perfis
+import { PerfilModule } from '../perfil/entities/perfil.module'; // Módulo de Perfis
 import { HashService } from '../common/middlewares/hash.service';
 import { LoginService } from './login.service';
 
@@ -13,7 +13,7 @@ import { LoginService } from './login.service';
     // Registra as entidades usadas neste módulo
     TypeOrmModule.forFeature([Usuarios, Perfil]), 
     // Importa o PerfisModule para compartilhar o PerfilRepository
-    PerfisModule 
+    PerfilModule 
   ],
   controllers: [UsuariosController],
   providers: [UsuariosService, HashService, LoginService],

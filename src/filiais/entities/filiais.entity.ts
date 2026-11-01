@@ -1,4 +1,4 @@
-//filiais.entity.ts
+//src/filiais.entity.ts
 import { Column, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Obras } from "../../obras-empreendimentos/entities/obras-empreendimento.entity";
 import { Usuarios } from "../../usuarios/entities/usuario.entity";

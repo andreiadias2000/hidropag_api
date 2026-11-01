@@ -8,8 +8,8 @@ import { ApiProperty } from '@nestjs/swagger';
 @Entity('APROVACOES')
 export class APROVACOES {
 
-    @PrimaryGeneratedColumn()
-    id?: number;
+    @PrimaryGeneratedColumn('uuid')
+    id?: string; // 👈 Precisa ser string! Se estiver number, vai dar conflito.
 
     @Column()
     @ApiProperty({ example: 1, description: 'Decisão: 1 para Aprovado, 2 para Reprovado' })
