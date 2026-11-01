@@ -7,11 +7,11 @@ import { AppDataSource } from './data-source';
 import { FiliaisModule } from './filiais/filiais.module';
 import { UsuariosModule } from './usuarios/usuarios.module'; 
 import { NotasFiscaisModule } from './notas-fiscais/notas-fiscais.module';
-import { AprovaçoesModule } from './aprovaçoes/aprovacoes.module';
+import { AprovacoesModule } from './aprovaçoes/aprovacoes.module';
 import { ObrasEmpreendimentosModule } from './obras-empreendimentos/obras-empreendimentos.module';
 import { LoginService } from './usuarios/login.service';
 import { TokenMiddleware } from './common/middlewares/token.middleware';
-import { PerfisModule } from './perfil/entities/perfil.module'; // Verifique se o caminho é este
+import { PerfilModule } from './perfil/entities/perfil.module'; // Verifique se o caminho é este
 import { UsuariosController } from './usuarios/usuarios.controller';
 import { NotasFiscaisController } from './notas-fiscais/notas-fiscais.controller';
 import { ObrasEmpreendimentosController } from './obras-empreendimentos/obras-empreendimentos.controller';
@@ -30,9 +30,9 @@ import { FornecedorController } from './fornecedores/fornecedores.controller';
     FiliaisModule,
     UsuariosModule,
     NotasFiscaisModule,
-    AprovaçoesModule,
+    AprovacoesModule,
     ObrasEmpreendimentosModule,
-    PerfisModule,
+    PerfilModule,
     ClientesModule,
     FornecedorModule, // Módulo de Perfis adicionado corretamente
   ],

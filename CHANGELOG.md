@@ -1,3 +1,21 @@
+## [Unreleased] - 2026-10-31
+
+### 🚀 Adicionado
+- **Testes E2E:** Implementação e validação de suítes de testes automatizados (Jest + Supertest + Docker PostgreSQL) para todas as entidades principais do sistema (`Usuários`, `Perfis`, `Filiais`, `Obras`, `Aprovações`).
+
+### 🔄 Modificado / Refatorado
+- **Usuários:** 
+  - Migração completa de chaves/identificadores numéricos para **UUID** nas camadas de DTO, Service, Controller e Entidade.
+  - Ajuste no DTO de Usuários integrando as decorações do Swagger e validações com `class-validator`.
+- **Aprovações:** 
+  - Correção ortográfica no nome do módulo/entidade (remoção de cedilha/caracteres especiais problemáticos).
+  - Ajuste de tipagem de dados na entidade e correção do fluxo de retorno da listagem (evitando lista vazia).
+- **Perfis:** 
+  - Reorganização estrutural da entidade de Perfil para a pasta correta do módulo, garantindo consistência com o TypeORM.
+
+### 🎯 Próximos Passos (Pendente)
+- **Frontend:** Atualização de rotas, DTOs e requisições HTTP para alinhar com os novos contratos da API.
+- **Testes de Integração:** Validação completa dos fluxos CRUD no front-end.
 # 📢 Recados e Histórico de Alterações
 
 ## [25/10/26] - adicinado entidade fonecedor 
