@@ -1,5 +1,5 @@
 // create-filiais.dto.ts
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { 
     IsNotEmpty, 
     IsOptional, 
@@ -23,10 +23,7 @@ export class CreateFilialDto {
     @Matches(/^\d+$/, { message: 'O CNPJ deve conter apenas números.' })
     cnpj?: string;
 
-    @ApiProperty({ example: true, description: 'Define se a filial está ativa no sistema', default: true, required: false })
-    @IsBoolean({ message: 'O campo ativo deve ser um booleano.' })
-    @IsOptional()
-    ativo?: boolean;
+       
 
     // --- BLOCO DE ENDEREÇO DETALHADO ---
     @ApiProperty({ example: 'Porto Alegre', description: 'Cidade onde a filial está alocada' })

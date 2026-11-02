@@ -1,3 +1,6 @@
+git commit -m "filiais não estava enviando a lista de desativados, ajustado o controller metodo listar e auterar"
+ver o teste automatizado deois.
+
 
 teste automatizado de todas entidades { }
 dto usuario estava sem o json do swager colocado para teste. 
