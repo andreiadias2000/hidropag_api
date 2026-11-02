@@ -51,16 +51,20 @@ export class FiliaisService {
   }
 
   async alterar(id: string, dados: UpdateFilialDto): Promise<void> {
-  const filial = await this.buscarPorId(id); // Já busca com withDeleted: true
+    const filial = await this.buscarPorId(id); // Já busca com withDeleted: true
 
-  // Se o usuário mandou deletedAt como null, garantimos que o TypeORM limpe a data no banco
-  if (dados.deletedAt === null) {
-    await this.repository.restore(id); // O TypeORM tem um método nativo .restore() para limpar o deletedAt!
+    // Se o frontend mandou deletedAt como null, reativamos o registro usando o restore nativo
+    if (dados.deletedAt === null) {
+      await this.repository.restore(id);
+      // Remove o deletedAt do objeto 'dados' para evitar conflito na atualização dos campos de texto
+      delete dados.deletedAt;
+    }
+
+    // Se ainda restou alguma alteração de texto/campos, atualiza normalmente
+    if (Object.keys(dados).length > 0) {
+      await this.repository.update(id, dados);
+    }
   }
-
-  // Atualiza os demais campos se houverem
-  await this.repository.update(id, dados);
-}
 
   async excluir(id: string): Promise<void> {
     const filial = await this.buscarPorId(id);
