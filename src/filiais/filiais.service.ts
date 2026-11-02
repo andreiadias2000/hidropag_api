@@ -1,3 +1,4 @@
+//src/filiais/filiais.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
@@ -30,14 +31,16 @@ export class FiliaisService {
 
   async listar(): Promise<Filiais[]> {
     return await this.repository.find({
-      relations: ['obras', 'usuarios'], // Traz os vínculos da filial
+      relations: ['obras', 'usuarios'],
+      withDeleted: true, // 👈 Força o TypeORM a trazer tanto as ativas quanto as inativas/deletadas
     });
   }
 
   async buscarPorId(id: string): Promise<Filiais> {
     const filial = await this.repository.findOne({
       where: { id: id as any },
-      relations: ['obras', 'usuarios'], // Traz os vínculos da filial
+      relations: ['obras', 'usuarios'],
+      withDeleted: true, // 👈 Permite buscar uma filial específica mesmo se ela estiver inativa/deletada
     });
 
     if (!filial) {
@@ -48,7 +51,8 @@ export class FiliaisService {
 
   async alterar(id: string, dados: UpdateFilialDto): Promise<void> {
     const filial = await this.repository.findOne({
-      where: { id: id as any }
+      where: { id: id as any },
+      withDeleted: true, // Busca mesmo se estiver deletada para poder editar/reativar
     });
 
     if (!filial) {
@@ -60,7 +64,8 @@ export class FiliaisService {
         where: { 
           nome: dados.nome,
           id: Not(id)
-        }
+        },
+        withDeleted: true
       });
 
       if (nomeDuplicado) {
@@ -68,6 +73,8 @@ export class FiliaisService {
       }
     }
 
+    // Se no DTO mandou um campo indicando que quer reativar, podemos tratar aqui se necessário,
+    // ou atualizar os dados normalmente:
     await this.repository.update(id, dados);
   }
 
