@@ -13,17 +13,23 @@ export class ClientesService {
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    // 1. Validação de duplicidade de CPF (Apenas se for Pessoa Física)
+    // 1. Validação de duplicidade de CPF (incluindo os deletados/inativos com withDeleted)
     if (createClienteDto.tipo_pessoa === TipoPessoa.PF && createClienteDto.cpf) {
-      const existe = await this.clienteRepository.findOne({ where: { cpf: createClienteDto.cpf } });
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cpf: createClienteDto.cpf },
+        withDeleted: true 
+      });
       if (existe) {
         throw new BadRequestException(`Já existe um cliente cadastrado com o CPF "${createClienteDto.cpf}".`);
       }
     }
 
-    // 2. Validação de duplicidade de CNPJ (Apenas se for Pessoa Jurídica)
+    // 2. Validação de duplicidade de CNPJ (incluindo os deletados/inativos com withDeleted)
     if (createClienteDto.tipo_pessoa === TipoPessoa.PJ && createClienteDto.cnpj) {
-      const existe = await this.clienteRepository.findOne({ where: { cnpj: createClienteDto.cnpj } });
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cnpj: createClienteDto.cnpj },
+        withDeleted: true 
+      });
       if (existe) {
         throw new BadRequestException(`Já existe um cliente cadastrado com o CNPJ "${createClienteDto.cnpj}".`);
       }
@@ -36,12 +42,16 @@ export class ClientesService {
 
   async findAll(): Promise<Cliente[]> {
     return await this.clienteRepository.find({
+      withDeleted: true, // 👈 Traz tanto ativos quanto inativos (soft-deleted) para o front separar nas abas
       order: { createdAt: 'DESC' }, 
     });
   }
 
   async findOne(id: string): Promise<Cliente> {
-    const cliente = await this.clienteRepository.findOne({ where: { id } });
+    const cliente = await this.clienteRepository.findOne({ 
+      where: { id },
+      withDeleted: true // 👈 Permite encontrar o cliente mesmo se estiver inativo
+    });
     
     if (!cliente) {
       throw new NotFoundException(`Cliente com ID ${id} não encontrado.`);
@@ -53,32 +63,43 @@ export class ClientesService {
   async update(id: string, updateClienteDto: UpdateClienteDto): Promise<Cliente> {
     const cliente = await this.findOne(id);
 
+    // Se o frontend mandou deletedAt como null, executamos o restore e removemos do DTO
+    if (updateClienteDto.deletedAt === null) {
+      await this.clienteRepository.restore(id);
+    }
+    
+    // Remove o deletedAt do DTO para evitar incompatibilidade no merge/save do TypeORM
+    const { deletedAt, ...dadosParaAtualizar } = updateClienteDto;
+
     // Validação de duplicidade na edição de CPF
-    if (updateClienteDto.cpf && updateClienteDto.cpf !== cliente.cpf) {
+    if (dadosParaAtualizar.cpf && dadosParaAtualizar.cpf !== cliente.cpf) {
       const existe = await this.clienteRepository.findOne({ 
-        where: { cpf: updateClienteDto.cpf, id: Not(id) } 
+        where: { cpf: dadosParaAtualizar.cpf, id: Not(id) },
+        withDeleted: true 
       });
       if (existe) {
-        throw new BadRequestException(`O CPF "${updateClienteDto.cpf}" já está em uso por outro cliente.`);
+        throw new BadRequestException(`O CPF "${dadosParaAtualizar.cpf}" já está em uso por outro cliente.`);
       }
     }
 
     // Validação de duplicidade na edição de CNPJ
-    if (updateClienteDto.cnpj && updateClienteDto.cnpj !== cliente.cnpj) {
+    if (dadosParaAtualizar.cnpj && dadosParaAtualizar.cnpj !== cliente.cnpj) {
       const existe = await this.clienteRepository.findOne({ 
-        where: { cnpj: updateClienteDto.cnpj, id: Not(id) } 
+        where: { cnpj: dadosParaAtualizar.cnpj, id: Not(id) },
+        withDeleted: true 
       });
       if (existe) {
-        throw new BadRequestException(`O CNPJ "${updateClienteDto.cnpj}" já está em uso por outro cliente.`);
+        throw new BadRequestException(`O CNPJ "${dadosParaAtualizar.cnpj}" já está em uso por outro cliente.`);
       }
     }
 
-    this.clienteRepository.merge(cliente, updateClienteDto);
+    this.clienteRepository.merge(cliente, dadosParaAtualizar);
     return await this.clienteRepository.save(cliente);
   }
 
   async remove(id: string): Promise<void> {
     const cliente = await this.findOne(id);
+    // Executa o softRemove que preenche o campo deleted_at e atualiza o status se necessário
     await this.clienteRepository.softRemove(cliente);
   }
 }
