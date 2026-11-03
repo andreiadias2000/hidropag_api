@@ -1,3 +1,5 @@
+regra de negocio em filiais filial ativa se não tiver relação ele deleta , se tiver uma relação e delet digital para não perder o historio
+
 git commit -m "filiais não estava enviando a lista de desativados, ajustado o controller metodo listar e auterar"
 ver o teste automatizado deois.
 
