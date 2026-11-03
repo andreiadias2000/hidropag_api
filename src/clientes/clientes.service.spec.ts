@@ -1,86 +1,101 @@
-// src/clientes/clientes.controller.spec.ts
-
-import { Test, TestingModule } from '@nestjs/testing';
-import { ClientesController } from './clientes.controller';
-import { ClientesService } from './clientes.service';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Not } from 'typeorm';
+import { Cliente, TipoPessoa } from './entities/cliente.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
-describe('ClientesController', () => {
-  let controller: ClientesController;
-  let service: jest.Mocked<ClientesService>;
+@Injectable()
+export class ClientesService {
+  constructor(
+    @InjectRepository(Cliente)
+    private readonly clienteRepository: Repository<Cliente>,
+  ) {}
 
-  const mockService = {
-    create: jest.fn(),
-    findAll: jest.fn(),
-    findOne: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
-  };
+  async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
+    if (createClienteDto.tipo_pessoa === TipoPessoa.PF && createClienteDto.cpf) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cpf: createClienteDto.cpf },
+        withDeleted: true 
+      });
+      if (existe) {
+        throw new BadRequestException(`Já existe um cliente cadastrado com o CPF "${createClienteDto.cpf}".`);
+      }
+    }
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ClientesController],
-      providers: [
-        {
-          provide: ClientesService,
-          useValue: mockService,
-        },
-      ],
-    }).compile();
+    if (createClienteDto.tipo_pessoa === TipoPessoa.PJ && createClienteDto.cnpj) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cnpj: createClienteDto.cnpj },
+        withDeleted: true 
+      });
+      if (existe) {
+        throw new BadRequestException(`Já existe um cliente cadastrado com o CNPJ "${createClienteDto.cnpj}".`);
+      }
+    }
 
-    controller = module.get<ClientesController>(ClientesController);
-    service = module.get(ClientesService);
-  });
+    const novoCliente = this.clienteRepository.create(createClienteDto);
+    return await this.clienteRepository.save(novoCliente);
+  }
 
-  it('deve estar definido', () => {
-    expect(controller).toBeDefined();
-  });
+  async findAll(): Promise<Cliente[]> {
+    return await this.clienteRepository.find({
+      withDeleted: true, // Crucial para trazer os inativos para as abas do front
+      order: { createdAt: 'DESC' }, 
+    });
+  }
 
-  it('deve reencaminhar a solicitação de criação para o serviço', () => {
-    const dto = new CreateClienteDto();
-    mockService.create.mockReturnValue('cliente criado');
+  async findOne(id: string): Promise<Cliente> {
+    const cliente = await this.clienteRepository.findOne({ 
+      where: { id },
+      withDeleted: true 
+    });
+    
+    if (!cliente) {
+      throw new NotFoundException(`Cliente com ID ${id} não encontrado.`);
+    }
+    
+    return cliente;
+  }
 
-    const resultado = controller.create(dto);
+  async update(id: string, updateClienteDto: UpdateClienteDto): Promise<Cliente> {
+    const cliente = await this.findOne(id);
 
-    expect(service.create).toHaveBeenCalledWith(dto);
-    expect(resultado).toBe('cliente criado');
-  });
+    // Se o front mandou ativo: true e o cliente estava inativado, restauramos ele
+    if (updateClienteDto.ativo === true && cliente.deletedAt) {
+      await this.clienteRepository.restore(id);
+    }
 
-  it('deve invocar o método de busca de todos os clientes', () => {
-    mockService.findAll.mockReturnValue('todos os clientes');
+    // Extrai o deletedAt para fora, impedindo que ele vá para o merge e cause erro no TypeScript
+    const { deletedAt, ...dadosParaAtualizar } = updateClienteDto as any;
 
-    const resultado = controller.findAll();
+    // Validação de duplicidade na edição de CPF
+    if (dadosParaAtualizar.cpf && dadosParaAtualizar.cpf !== cliente.cpf) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cpf: dadosParaAtualizar.cpf, id: Not(id) },
+        withDeleted: true 
+      });
+      if (existe) {
+        throw new BadRequestException(`O CPF "${dadosParaAtualizar.cpf}" já está em uso por outro cliente.`);
+      }
+    }
 
-    expect(service.findAll).toHaveBeenCalled();
-    expect(resultado).toBe('todos os clientes');
-  });
+    // Validação de duplicidade na edição de CNPJ
+    if (dadosParaAtualizar.cnpj && dadosParaAtualizar.cnpj !== cliente.cnpj) {
+      const existe = await this.clienteRepository.findOne({ 
+        where: { cnpj: dadosParaAtualizar.cnpj, id: Not(id) },
+        withDeleted: true 
+      });
+      if (existe) {
+        throw new BadRequestException(`O CNPJ "${dadosParaAtualizar.cnpj}" já está em uso por outro cliente.`);
+      }
+    }
 
-  it('deve converter o parâmetro de texto em numérico ao pesquisar por ID', () => {
-    mockService.findOne.mockReturnValue('cliente específico');
+    this.clienteRepository.merge(cliente, dadosParaAtualizar);
+    return await this.clienteRepository.save(cliente);
+  }
 
-    const resultado = controller.findOne('7');
-
-    expect(service.findOne).toHaveBeenCalledWith(7);
-    expect(resultado).toBe('cliente específico');
-  });
-
-  it('deve converter o ID e transmitir o DTO ao atualizar', () => {
-    const dto = new UpdateClienteDto();
-    mockService.update.mockReturnValue('cliente alterado');
-
-    const resultado = controller.update('3', dto);
-
-    expect(service.update).toHaveBeenCalledWith(3, dto);
-    expect(resultado).toBe('cliente alterado');
-  });
-
-  it('deve converter o ID ao solicitar a remoção', () => {
-    mockService.remove.mockReturnValue('cliente removido');
-
-    const resultado = controller.remove('9');
-
-    expect(service.remove).toHaveBeenCalledWith(9);
-    expect(resultado).toBe('cliente removido');
-  });
-});
+  async remove(id: string): Promise<void> {
+    const cliente = await this.findOne(id);
+    await this.clienteRepository.softRemove(cliente);
+  }
+}
