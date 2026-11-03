@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { Notas } from '../../notas-fiscais/entities/notas-fiscais.entity';
+// Importa a classe Obras (ajuste o nome do arquivo se for 'obra.entity' ou 'obras-empreendimento.entity')
 import { Obras } from '../../obras-empreendimentos/entities/obras-empreendimento.entity';
 
 export enum TipoPessoa {
@@ -26,34 +28,34 @@ export class Cliente {
   @ApiProperty({ enum: TipoPessoa, description: 'PF ou PJ' })
   tipo_pessoa!: TipoPessoa;
 
-  // --- PESSOA JURÍDICA ---
+  // --- PESSOA JURÍDICA --------------------------------------------
   @Column({ type: 'varchar', nullable: true })
-  @ApiProperty({ example: 'Construtora Sul Ltda', description: 'Razão Social do cliente' })
+  @ApiPropertyOptional({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social do cliente' })
   razao_social?: string;
 
   @Column({ type: 'varchar', length: 14, unique: true, nullable: true })
-  @ApiProperty({ example: '12345678000190', description: 'CNPJ (somente números)' })
+  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ (somente números)' })
   cnpj?: string;
 
-  // --- PESSOA FÍSICA ---
+  // --- PESSOA FÍSICA --------------------------------
   @Column({ type: 'varchar', nullable: true })
-  @ApiProperty({ example: 'João da Silva', description: 'Nome completo do cliente' })
+  @ApiPropertyOptional({ example: 'Carlos Alberto', description: 'Nome completo do cliente' })
   nome?: string;
 
   @Column({ type: 'varchar', length: 11, unique: true, nullable: true })
   @ApiPropertyOptional({ example: '12345678900', description: 'CPF (somente números)' })
   cpf?: string;
 
-  // --- COMUM ---
+  // --- COMUM ---------------------------------------------
   @Column({ type: 'varchar', nullable: true })
-  @ApiPropertyOptional({ example: 'contato@construtorasul.com.br', description: 'E-mail de contato' })
+  @ApiPropertyOptional({ example: 'contato@silva.com.br', description: 'E-mail de contato' })
   email?: string;
 
   @Column({ type: 'varchar', length: 11, nullable: true })
-  @ApiPropertyOptional({ example: '51987654321', description: 'Telefone com DDD (somente números)' })
+  @ApiPropertyOptional({ example: '51999998888', description: 'Telefone (somente números)' })
   telefone?: string;
 
-  // --- ENDEREÇO COMPLETO ---
+  // --- ENDEREÇO COMPLETO -------------------------------------------
   @Column({ type: 'varchar', length: 8, nullable: true })
   @ApiPropertyOptional({ example: '90000000', description: 'CEP (somente números)' })
   cep?: string;
@@ -75,23 +77,29 @@ export class Cliente {
   estado?: string;
 
   @Column({ type: 'varchar', nullable: true })
-  @ApiPropertyOptional({ example: 'Apto 201', description: 'Complemento do endereço' })
+  @ApiPropertyOptional({ example: 'Sala 402', description: 'Complemento do endereço' })
   complemento?: string;
 
   @Column({ type: 'varchar', nullable: true })
-  @ApiPropertyOptional({ example: 'Rua das Flores, 123', description: 'Logradouro / Endereço' })
+  @ApiPropertyOptional({ example: 'Av. Industrial, 456', description: 'Endereço' })
   endereco?: string;
 
-  // --- SISTEMA ---
+  // -----------------------------------------------------------------
   @Column({ type: 'boolean', default: true })
   ativo!: boolean;
 
   @Column({ type: 'integer', nullable: true })
+  @ApiPropertyOptional({ example: 4567, description: 'Código do sistema Elevor' })
   codigo_elevor?: number;
 
+  // 1 Cliente -> N Obras (conecta com @ManyToOne em Obras)
   @OneToMany(() => Obras, (obra) => obra.cliente)
-  @Exclude()
   obras?: Obras[];
+
+  // 1 Cliente -> N Notas
+  @OneToMany(() => Notas, (nota) => (nota as any).cliente)
+  @Exclude()
+  notas?: Notas[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

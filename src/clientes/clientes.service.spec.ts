@@ -1,101 +1,85 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
-import { Cliente, TipoPessoa } from './entities/cliente.entity';
-import { CreateClienteDto } from './dto/create-cliente.dto';
-import { UpdateClienteDto } from './dto/update-cliente.dto';
+import { Test, TestingModule } from '@nestjs/testing';
+import { FornecedorService } from './fornecedores.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Fornecedor } from './entities/fornecedor.entity';
+import { NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 
-@Injectable()
-export class ClientesService {
-  constructor(
-    @InjectRepository(Cliente)
-    private readonly clienteRepository: Repository<Cliente>,
-  ) {}
+const mockFornecedorRepository = {
+  create: jest.fn().mockImplementation((dto) => dto),
+  save: jest.fn().mockImplementation((fornecedor) => Promise.resolve({ id: 'uuid-123', ...fornecedor })),
+  find: jest.fn().mockResolvedValue([{ id: 'uuid-123', razao_social: 'Teste LTDA', ativo: true }]),
+  findOne: jest.fn(),
+  merge: jest.fn().mockImplementation((entity, dto) => Object.assign(entity, dto)),
+  softRemove: jest.fn().mockResolvedValue(undefined),
+};
 
-  async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    if (createClienteDto.tipo_pessoa === TipoPessoa.PF && createClienteDto.cpf) {
-      const existe = await this.clienteRepository.findOne({ 
-        where: { cpf: createClienteDto.cpf },
-        withDeleted: true 
-      });
-      if (existe) {
-        throw new BadRequestException(`Já existe um cliente cadastrado com o CPF "${createClienteDto.cpf}".`);
-      }
-    }
+describe('FornecedorService', () => {
+  let service: FornecedorService;
+  let repository: Repository<Fornecedor>;
 
-    if (createClienteDto.tipo_pessoa === TipoPessoa.PJ && createClienteDto.cnpj) {
-      const existe = await this.clienteRepository.findOne({ 
-        where: { cnpj: createClienteDto.cnpj },
-        withDeleted: true 
-      });
-      if (existe) {
-        throw new BadRequestException(`Já existe um cliente cadastrado com o CNPJ "${createClienteDto.cnpj}".`);
-      }
-    }
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FornecedorService,
+        {
+          provide: getRepositoryToken(Fornecedor),
+          useValue: mockFornecedorRepository,
+        },
+      ],
+    }).compile();
 
-    const novoCliente = this.clienteRepository.create(createClienteDto);
-    return await this.clienteRepository.save(novoCliente);
-  }
+    service = module.get<FornecedorService>(FornecedorService);
+    repository = module.get<Repository<Fornecedor>>(getRepositoryToken(Fornecedor));
+  });
 
-  async findAll(): Promise<Cliente[]> {
-    return await this.clienteRepository.find({
-      withDeleted: true, // Crucial para trazer os inativos para as abas do front
-      order: { createdAt: 'DESC' }, 
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+    expect(repository).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('deve criar e salvar um fornecedor com sucesso', async () => {
+      const dto = { razao_social: 'Fornecedor Teste', ativo: true };
+      const result = await service.create(dto as any);
+
+      expect(result).toEqual({ id: 'uuid-123', ...dto });
+      expect(repository.create).toHaveBeenCalledWith(dto);
+      expect(repository.save).toHaveBeenCalled();
     });
-  }
+  });
 
-  async findOne(id: string): Promise<Cliente> {
-    const cliente = await this.clienteRepository.findOne({ 
-      where: { id },
-      withDeleted: true 
+  describe('findAll', () => {
+    it('deve retornar uma lista de fornecedores', async () => {
+      const result = await service.findAll();
+      expect(result).toEqual([{ id: 'uuid-123', razao_social: 'Teste LTDA', ativo: true }]);
+      expect(repository.find).toHaveBeenCalledWith({ relations: ['notas'] });
     });
-    
-    if (!cliente) {
-      throw new NotFoundException(`Cliente com ID ${id} não encontrado.`);
-    }
-    
-    return cliente;
-  }
+  });
 
-  async update(id: string, updateClienteDto: UpdateClienteDto): Promise<Cliente> {
-    const cliente = await this.findOne(id);
+  describe('findOne', () => {
+    it('deve retornar um fornecedor caso ele exista', async () => {
+      const fornecedorMock = { id: 'uuid-123', razao_social: 'Teste' };
+      jest.spyOn(repository, 'findOne').mockResolvedValue(fornecedorMock as Fornecedor);
 
-    // Se o front mandou ativo: true e o cliente estava inativado, restauramos ele
-    if (updateClienteDto.ativo === true && cliente.deletedAt) {
-      await this.clienteRepository.restore(id);
-    }
+      const result = await service.findOne('uuid-123');
+      expect(result).toEqual(fornecedorMock);
+    });
 
-    // Extrai o deletedAt para fora, impedindo que ele vá para o merge e cause erro no TypeScript
-    const { deletedAt, ...dadosParaAtualizar } = updateClienteDto as any;
+    it('deve lançar NotFoundException se o fornecedor não for encontrado', async () => {
+      jest.spyOn(repository, 'findOne').mockResolvedValue(null);
 
-    // Validação de duplicidade na edição de CPF
-    if (dadosParaAtualizar.cpf && dadosParaAtualizar.cpf !== cliente.cpf) {
-      const existe = await this.clienteRepository.findOne({ 
-        where: { cpf: dadosParaAtualizar.cpf, id: Not(id) },
-        withDeleted: true 
-      });
-      if (existe) {
-        throw new BadRequestException(`O CPF "${dadosParaAtualizar.cpf}" já está em uso por outro cliente.`);
-      }
-    }
+      await expect(service.findOne('uuid-inexistente')).rejects.toThrow(NotFoundException);
+    });
+  });
 
-    // Validação de duplicidade na edição de CNPJ
-    if (dadosParaAtualizar.cnpj && dadosParaAtualizar.cnpj !== cliente.cnpj) {
-      const existe = await this.clienteRepository.findOne({ 
-        where: { cnpj: dadosParaAtualizar.cnpj, id: Not(id) },
-        withDeleted: true 
-      });
-      if (existe) {
-        throw new BadRequestException(`O CNPJ "${dadosParaAtualizar.cnpj}" já está em uso por outro cliente.`);
-      }
-    }
+  describe('remove', () => {
+    it('deve executar o softRemove no fornecedor encontrado', async () => {
+      const fornecedorMock = { id: 'uuid-123', razao_social: 'Teste' };
+      jest.spyOn(service, 'findOne').mockResolvedValue(fornecedorMock as Fornecedor);
 
-    this.clienteRepository.merge(cliente, dadosParaAtualizar);
-    return await this.clienteRepository.save(cliente);
-  }
-
-  async remove(id: string): Promise<void> {
-    const cliente = await this.findOne(id);
-    await this.clienteRepository.softRemove(cliente);
-  }
-}
+      await service.remove('uuid-123');
+      expect(repository.softRemove).toHaveBeenCalledWith(fornecedorMock);
+    });
+  });
+});
