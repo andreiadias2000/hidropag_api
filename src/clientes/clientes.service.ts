@@ -17,9 +17,10 @@ export class ClientesService {
     return await this.clientesRepository.save(cliente);
   }
 
-  async findAll(): Promise<Cliente[]> {
+  async findAll() {
     return await this.clientesRepository.find({
-      relations: ['obras'], // ou ['notas'], ajuste conforme a relação definida na sua entidade Cliente
+      withDeleted: true, // Permite carregar registros mesmo com deleted_at preenchido
+      order: { razao_social: 'ASC' }
     });
   }
 
