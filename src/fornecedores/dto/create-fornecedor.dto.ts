@@ -15,7 +15,7 @@ import { Transform } from 'class-transformer';
 import { TipoPessoa } from '../entities/fornecedor.entity';
 
 
-export class CreateClienteDto {
+export class CreateFornecedorDto {
   @IsEnum(TipoPessoa, { message: 'O tipo de pessoa deve ser PF ou PJ.' })
   @ApiProperty({ enum: TipoPessoa, default: TipoPessoa.PJ, description: 'PF ou PJ' })
   tipo_pessoa!: TipoPessoa;
