@@ -31,20 +31,49 @@ export class Cliente {
   // --- PESSOA JURÍDICA --------------------------------------------
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Materiais de Construção Silva LTDA', description: 'Razão Social do cliente' })
-  razao_social?: string;
+  razao_social?: string | null;
 
-  @Column({ type: 'varchar', length: 14, unique: true, nullable: true })
-  @ApiPropertyOptional({ example: '12345678000190', description: 'CNPJ (somente números)' })
-  cnpj?: string;
+  @Column({
+    type: 'varchar',
+    length: 14,
+    unique: true,
+    nullable: true,
+    transformer: {
+      to: (value?: string | null) => {
+        if (!value) return null;
+        const limpo = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return limpo.length > 0 ? limpo : null;
+      },
+      from: (value?: string | null) => value,
+    },
+  })
+  @ApiPropertyOptional({
+    example: '12ABC678000190',
+    description: 'CNPJ alfanumérico sem pontuação',
+  })
+  cnpj?: string | null;
 
   // --- PESSOA FÍSICA --------------------------------
   @Column({ type: 'varchar', nullable: true })
   @ApiPropertyOptional({ example: 'Carlos Alberto', description: 'Nome completo do cliente' })
-  nome?: string;
+  nome?: string | null;
 
-  @Column({ type: 'varchar', length: 11, unique: true, nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 11,
+    unique: true,
+    nullable: true,
+    transformer: {
+      to: (value?: string | null) => {
+        if (!value) return null;
+        const limpo = value.replace(/\D/g, '');
+        return limpo.length > 0 ? limpo : null;
+      },
+      from: (value?: string | null) => value,
+    },
+  })
   @ApiPropertyOptional({ example: '12345678900', description: 'CPF (somente números)' })
-  cpf?: string;
+  cpf?: string | null;
 
   // --- COMUM ---------------------------------------------
   @Column({ type: 'varchar', nullable: true })

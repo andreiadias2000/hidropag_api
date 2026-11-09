@@ -1,5 +1,6 @@
 // create-filiais.dto.ts
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { 
     IsNotEmpty, 
     IsOptional, 
@@ -16,12 +17,24 @@ export class CreateFilialDto {
     @IsNotEmpty({ message: 'O nome da filial é obrigatório.' })
     nome?: string;
 
-    @ApiProperty({ example: '12345678000199', description: 'CNPJ da filial (apenas números)', required: false })
-    @IsString()
+    @ApiPropertyOptional({
+    example: '12ABC678000199',
+    description: 'CNPJ alfanumérico da filial sem pontuação',
+    })
     @IsOptional()
-    @Length(14, 14, { message: 'O CNPJ deve conter exatamente 14 dígitos.' })
-    @Matches(/^\d+$/, { message: 'O CNPJ deve conter apenas números.' })
-    cnpj?: string;
+    @Transform(({ value }) => {
+        if (typeof value === 'string') {
+        const limpo = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return limpo === '' ? null : limpo;
+        }
+        return value ?? null;
+    })
+    @IsString({ message: 'O CNPJ deve ser um texto válido.' })
+    @Length(14, 14, { message: 'O CNPJ deve conter exatamente 14 caracteres.' })
+    @Matches(/^[A-Z0-9]{12}\d{2}$/, {
+        message: 'Formato de CNPJ inválido. Os 12 primeiros caracteres devem ser alfanuméricos e os 2 últimos numéricos.',
+    })
+    cnpj?: string | null;
 
        
 

@@ -2,7 +2,7 @@
 import { Column, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Obras } from "../../obras-empreendimentos/entities/obras-empreendimento.entity";
 import { Usuarios } from "../../usuarios/entities/usuario.entity";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 @Entity('FILIAIS')
 export class Filiais {
@@ -37,9 +37,25 @@ export class Filiais {
     @ApiProperty({ description: 'Data de desativação da filial (Soft Delete)', nullable: true })
     deletedAt?: Date;
 
-    @Column({ nullable: true, unique: true, length: 14 })
-    @ApiProperty({ example: '12345678000199', description: 'CNPJ da filial (apenas números)' })
-    cnpj?: string;
+    @Column({
+    type: 'varchar',
+    length: 14,
+    unique: true,
+    nullable: true,
+    transformer: {
+        to: (value?: string | null) => {
+            if (!value) return null;
+            const limpo = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            return limpo.length > 0 ? limpo : null;
+        },
+        from: (value?: string | null) => value,
+        },
+    })
+    @ApiPropertyOptional({
+        example: '12ABC678000199',
+        description: 'CNPJ alfanumérico da filial (sem pontuação)',
+    })
+    cnpj?: string | null;
 
     // CORREÇÃO: O campo em Obras chama-se 'filial' (singular)
     
