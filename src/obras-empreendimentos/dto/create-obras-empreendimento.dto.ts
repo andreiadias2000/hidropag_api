@@ -14,7 +14,7 @@ import {
   IsNumber, 
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 
 export class CreateObrasEmpreendimentoDto {
@@ -33,13 +33,22 @@ export class CreateObrasEmpreendimentoDto {
   @IsOptional()
   clienteId!: string;
 
-  @ApiProperty({ example: '123456789012', required: true })
-  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\D/g, '') : value))
-  @IsString()
-  @IsNotEmpty({ message: 'O CNO é obrigatório.' }) // Agora é obrigatório
+  @ApiPropertyOptional({
+    example: '123456789012',
+    description: 'CNO da obra (12 dígitos numéricos, opcional)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const limpo = value.replace(/\D/g, '');
+      return limpo === '' ? null : limpo;
+    }
+    return value ?? null;
+  })
+  @IsString({ message: 'O CNO deve ser um texto válido.' })
   @Length(12, 12, { message: 'O CNO deve conter exatamente 12 números.' })
   @Matches(/^\d{12}$/, { message: 'O CNO deve conter apenas números.' })
-  cno!: string;
+  cno?: string | null;
 
   @ApiProperty({ example: 'Rua Ramiro Barcelos, 910 - Porto Alegre/RS', required: false })
   @IsString()

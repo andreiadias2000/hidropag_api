@@ -11,7 +11,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 
 import { Filiais } from '../../filiais/entities/filiais.entity';
@@ -40,13 +40,9 @@ export class Obras {
   })
   nome_obra!: string;
 
-  @Column({ type: 'varchar', length: 30, nullable: true })
-  @ApiProperty({
-    example: '12.345.67890/12',
-    description: 'CNO - Cadastro Nacional de Obras',
-    required: false,
-  })
-  cno?: string;
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  @ApiPropertyOptional({ example: '123456789012', description: 'CNO da obra' })
+  cno?: string | null;
 
   @Column({ type: 'text', nullable: true })
   @ApiProperty({
