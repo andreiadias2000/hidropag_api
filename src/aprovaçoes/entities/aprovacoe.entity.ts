@@ -19,6 +19,14 @@ export class APROVACOES {
     @ApiProperty({ example: 'Valor de acordo com o contrato', description: 'Observações sobre a aprovação' })
     observacao?: string;
 
+    @Column({ type: 'varchar', nullable: true })
+    @ApiProperty({ example: 'A1B2C3D4E5F6...', description: 'Hash SHA-256 da assinatura eletrônica aplicada no PDF' })
+    hash_assinatura?: string | null;
+
+    @Column({ type: 'varchar', nullable: true })
+    @ApiProperty({ description: 'Hash SHA-256 completo dos bytes do PDF final carimbado' })
+    hash_arquivo_final?: string | null;
+
     // Relacionamento: Muitas aprovações podem referenciar a mesma Nota
     @ManyToOne(() => Notas, (nota) => nota.aprovacoes)
     @ApiProperty({type: () => Notas })

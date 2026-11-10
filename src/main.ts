@@ -10,10 +10,17 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // 👇 ADICIONADO CONFIGURAÇÃO DE CORS
   app.enableCors({
-    origin: ['https://hidropagfront.vercel.app', 'http://localhost:3000', 'http://localhost:5173','http://127.0.0.1:5174'],
-    methods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
-    credentials: true,
-  });
+  origin: [
+    'https://hidropagfront.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+  ],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,
+});
   // Ela obriga a API a validar os dados de entrada usando os DTOs.
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,          // Remove campos enviados que não estão no DTO

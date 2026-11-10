@@ -9,9 +9,17 @@ import {
   UseGuards,
   Put,
   Req,
+<<<<<<< HEAD
 } from '@nestjs/common';
+=======
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+>>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
 import { AprovacoesService } from './aprovacoes.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { CreateAprovacoeDto } from './dto/create-aprovacoe.dto';
 import { UpdateAprovacoeDto } from './dto/update-aprovacoe.dto';
@@ -38,6 +46,33 @@ export class AprovaçoesController {
   @ApiOperation({ summary: 'Listar todas as aprovações' })
   async buscarTodas() {
     return await this.aprovaçoesService.buscarTodas();
+  }
+
+  @Get('validar/:hash')
+  @ApiOperation({
+    summary: 'Validar autenticidade pelo Hash SHA-256 impresso no carimbo',
+  })
+  async validarPorHash(@Param('hash') hash: string) {
+    return await this.aprovaçoesService.validarPorHash(hash);
+  }
+
+  @Post('validar-arquivo')
+  @ApiOperation({
+    summary: 'Validar integridade enviando o arquivo PDF carimbado',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  async validarPorArquivo(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Envie um arquivo PDF para validação.');
+    }
+    return await this.aprovaçoesService.validarPorArquivo(file.buffer);
   }
 
   @Get(':id')

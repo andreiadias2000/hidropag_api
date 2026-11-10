@@ -1,8 +1,14 @@
-import { Injectable, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Usuarios } from './entities/usuario.entity';
-import { Perfil } from '../perfil/entities/perfil.entity'; // Certifique-se de criar este caminho
+import { Perfil } from '../perfil/entities/perfil.entity';
 import { HashService } from '../common/middlewares/hash.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 
@@ -18,43 +24,32 @@ export class UsuariosService implements OnModuleInit {
     private readonly hashService: HashService,
   ) {}
 
-  /**
-   * Este método roda automaticamente sempre que o servidor sobe.
-   * Ele garante que os perfis existam e que haja um administrador Root.
-   */
-  
   async onModuleInit() {
     const nomesPerfis = ['root', 'gestor', 'lancador', 'leitor'];
     
-    // 1. Garante os perfis
     for (const nome of nomesPerfis) {
       const perfilExiste = await this.perfilRepository.findOne({ where: { nome } });
       if (!perfilExiste) {
-        // Usando save(create()) para garantir a tipagem correta
         const novoPerfil = this.perfilRepository.create({ nome });
         await this.perfilRepository.save(novoPerfil);
       }
     }
 
-    // 2. Cria o usuário Root inicial
-    
-    const emailRoot = process.env.ROOT_EMAIL || 'admin@hidropag.com' ;
-    const senhaRoot = process.env.ROOT_SENHA || 'Admin#2026' ;
+    const emailRoot = process.env.ROOT_EMAIL || 'admin@hidropag.com';
+    const senhaRoot = process.env.ROOT_SENHA || 'Admin#2026';
     const rootExiste = await this.repository.findOne({ where: { email: emailRoot } });
 
     if (!rootExiste) {
       const perfilRoot = await this.perfilRepository.findOne({ where: { nome: 'root' } });
 
-      // Correção do Erro: Verificamos se o perfil foi encontrado antes de criar o usuário
       if (perfilRoot) {
         const senhaHashed = await this.hashService.gerarHash(senhaRoot!);
 
-        // Forçamos o tipo para DeepPartial para evitar o erro de sobrecarga
         const dadosUsuario = {
           nome: 'Administrador Root',
           email: emailRoot,
           senha: senhaHashed,
-          perfil: perfilRoot, // Agora o TS sabe que não é null
+          perfil: perfilRoot,
         };
 
         const novoRoot = this.repository.create(dadosUsuario);
@@ -65,8 +60,6 @@ export class UsuariosService implements OnModuleInit {
       }
     }
   }
-  
-
 
   async inserir(dados: CreateUsuarioDto): Promise<Usuarios> {
     if (!dados.email || !dados.senha) {
@@ -81,14 +74,27 @@ export class UsuariosService implements OnModuleInit {
       throw new BadRequestException("Este e-mail já está cadastrado no sistema.");
     }
 
+    // 🔒 Bloqueia criação de novos usuários com perfil 'root'
+    // 🔒 Bloqueia criação de novos usuários com perfil 'root'
+    if (dados.perfil?.id) {
+      const perfilSelecionado = await this.perfilRepository.findOne({
+        where: { id: Number(dados.perfil.id) },
+      });
+
+      if (perfilSelecionado?.nome?.toLowerCase() === 'root') {
+        throw new ForbiddenException(
+          "Por segurança, não é permitido cadastrar novos usuários com o perfil Root.",
+        );
+      }
+    }
+
     const senhaCriptografada = await this.hashService.gerarHash(dados.senha);
 
     const novoUsuarioData: Partial<Usuarios> = {
       nome: dados.nome,
       email: dados.email,
       senha: senhaCriptografada,
-      ativo: true,// 🔒 Fixo: todo novo usuário nasce ativo por padrão
-      
+      ativo: true,
       perfil: dados.perfil ? ({ id: dados.perfil.id } as any) : undefined,
       filial: dados.filial ? ({ id: dados.filial.id } as any) : undefined,
     };
@@ -98,10 +104,19 @@ export class UsuariosService implements OnModuleInit {
     return await this.repository.save(novoUsuario);
   }
 
+  // Oculta o usuário 'root' da listagem geral e remove o campo senha do retorno
   async listar(): Promise<Usuarios[]> {
-    return await this.repository.find({
-      relations: ['filial', 'perfil'], // Adicionado perfil na listagem
+    const usuarios = await this.repository.find({
+      relations: ['filial', 'perfil'],
+      where: {
+        perfil: {
+          nome: Not('root'),
+        },
+      },
+      order: { nome: 'ASC' },
     });
+
+    return usuarios.map(({ senha, ...rest }) => rest as Usuarios);
   }
 
   async buscarPorId(id: string): Promise<Usuarios> {
@@ -110,41 +125,56 @@ export class UsuariosService implements OnModuleInit {
       relations: ['filial', 'aprovacoes', 'perfil'],
     });
 
-    if (!usuario) {
+    if (!usuario || usuario.perfil?.nome === 'root') {
       throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
-    return usuario;
+
+    const { senha, ...semSenha } = usuario;
+    return semSenha as Usuarios;
   }
 
   async alterar(id: string, dadosAtualizacao: Partial<Usuarios>): Promise<void> {
-  // 1. Verifica se o usuário existe (lança NotFound se não encontrar)
-  const usuarioExiste = await this.buscarPorId(id);
+    const usuarioExiste = await this.buscarPorId(id);
 
-  if (!usuarioExiste) {
-    throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
-  }
+    if (!usuarioExiste) {
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+    }
 
-  // 2. Se houver nova senha, gera o hash criptografado
-  if (dadosAtualizacao.senha) {
-    dadosAtualizacao.senha = await this.hashService.gerarHash(dadosAtualizacao.senha);
-  } else {
-    // Garante que se a senha não foi enviada, ela não seja sobrescrita com vazia/undefined
-    delete dadosAtualizacao.senha;
-  }
+    // 🔒 Impede promover qualquer usuário existente para 'root'
+    // 🔒 Impede promover qualquer usuário existente para 'root'
+    if (dadosAtualizacao.perfil?.id) {
+      const perfilSelecionado = await this.perfilRepository.findOne({
+        where: { id: Number(dadosAtualizacao.perfil.id) },
+      });
 
-  // 3. Remove o ID de dentro do objeto para evitar conflito na chave primária
-  delete dadosAtualizacao.id;
+      if (perfilSelecionado?.nome?.toLowerCase() === 'root') {
+        throw new ForbiddenException(
+          "Não é permitido atribuir o perfil Root a um usuário.",
+        );
+      }
+    }
 
-  // 4. Executa o update informando o ID explicitamente
-  await this.repository.update(id, dadosAtualizacao);
+    if (dadosAtualizacao.senha) {
+      dadosAtualizacao.senha = await this.hashService.gerarHash(dadosAtualizacao.senha);
+    } else {
+      delete dadosAtualizacao.senha;
+    }
+
+    delete dadosAtualizacao.id;
+
+    await this.repository.update(id, dadosAtualizacao);
   }
 
   async remove(id: string): Promise<void> {
-  const usuario = await this.repository.findOne({ where: { id } });
-  if (!usuario) {
-    throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
-  }
+    const usuario = await this.repository.findOne({
+      where: { id },
+      relations: ['perfil'],
+    });
 
-  await this.repository.update(id, { ativo: false });
+    if (!usuario || usuario.perfil?.nome === 'root') {
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+    }
+
+    await this.repository.update(id, { ativo: false });
   }
 }

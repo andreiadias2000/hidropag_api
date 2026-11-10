@@ -2,8 +2,10 @@
 
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+// import { Repository } from 'typeorm';
 import { Perfil } from './perfil.entity';
+import { Repository, Not } from 'typeorm';
+
 
 @Injectable()
 export class PerfisService {
@@ -22,7 +24,10 @@ export class PerfisService {
   }
 
   async listar(): Promise<Perfil[]> {
-    return await this.repository.find();
+    return await this.repository.find({
+      where: { nome: Not('root') },
+      order: { id: 'ASC' },
+    });
   }
 
   async buscarPorId(id: number): Promise<Perfil> {

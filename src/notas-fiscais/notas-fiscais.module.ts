@@ -11,5 +11,6 @@ import { Fornecedor } from '../fornecedores/entities/fornecedor.entity';
   imports: [TypeOrmModule.forFeature([Notas, Fornecedor])], // Registra ambas as entidades
   controllers: [NotasFiscaisController],
   providers: [NotasFiscaisService],
+  exports: [NotasFiscaisService],
 })
 export class NotasFiscaisModule {}
