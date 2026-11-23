@@ -30,7 +30,7 @@ export class PerfisService {
     });
   }
 
-  async buscarPorId(id: number): Promise<Perfil> {
+  async buscarPorId(id: string): Promise<Perfil> {
     const perfil = await this.repository.findOne({ where: { id } });
     if (!perfil) {
       throw new NotFoundException(`Perfil com ID ${id} não encontrado`);

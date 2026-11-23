@@ -5,9 +5,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class Perfil {
+  
   @PrimaryGeneratedColumn('uuid')
-  id?: number;
-
+  id!: string;
   @Column({ unique: true })
   @ApiProperty({ example: 'root, gestor, lancador , leitor' })
   nome?: string; // 'root', 'gestor', 'lancador', 'leitor'

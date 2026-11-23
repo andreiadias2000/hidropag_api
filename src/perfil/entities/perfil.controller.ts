@@ -22,7 +22,7 @@ export class PerfisController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Busca um perfil pelo ID' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIntPipe) id: string) {
     return this.perfisService.buscarPorId(id);
   }
 }

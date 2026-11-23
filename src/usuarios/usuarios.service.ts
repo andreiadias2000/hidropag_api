@@ -62,59 +62,65 @@ export class UsuariosService implements OnModuleInit {
   }
 
   async inserir(dados: CreateUsuarioDto): Promise<Usuarios> {
-    if (!dados.email || !dados.senha) {
-      throw new BadRequestException("Falta dados obrigatórios");
+    if (!dados.nome || !dados.email || !dados.senha) {
+      throw new BadRequestException('Nome, e-mail e senha são obrigatórios.');
+    }
+
+    const perfilId = dados.perfil?.id?.trim();
+    if (!perfilId) {
+      throw new BadRequestException('É obrigatório selecionar um perfil de acesso válido.');
     }
 
     const usuarioExistente = await this.repository.findOne({
-      where: { email: dados.email }
+      where: { email: dados.email },
     });
 
     if (usuarioExistente) {
-      throw new BadRequestException("Este e-mail já está cadastrado no sistema.");
+      throw new BadRequestException('Este e-mail já está cadastrado no sistema.');
+    }
+
+    const perfilSelecionado = await this.perfilRepository.findOne({
+      where: { id: perfilId as any },
+    });
+
+    if (!perfilSelecionado) {
+      throw new NotFoundException('Perfil de acesso não encontrado.');
     }
 
     // 🔒 Bloqueia criação de novos usuários com perfil 'root'
-    // 🔒 Bloqueia criação de novos usuários com perfil 'root'
-    if (dados.perfil?.id) {
-      const perfilSelecionado = await this.perfilRepository.findOne({
-        where: { id: Number(dados.perfil.id) },
-      });
-
-      if (perfilSelecionado?.nome?.toLowerCase() === 'root') {
-        throw new ForbiddenException(
-          "Por segurança, não é permitido cadastrar novos usuários com o perfil Root.",
-        );
-      }
+    if (perfilSelecionado.nome?.toLowerCase() === 'root') {
+      throw new ForbiddenException(
+        'Por segurança, não é permitido cadastrar novos usuários com o perfil Root.',
+      );
     }
 
     const senhaCriptografada = await this.hashService.gerarHash(dados.senha);
 
-    const novoUsuarioData: Partial<Usuarios> = {
+    const novoUsuario = this.repository.create({
       nome: dados.nome,
       email: dados.email,
       senha: senhaCriptografada,
       ativo: true,
-      perfil: dados.perfil ? ({ id: dados.perfil.id } as any) : undefined,
-      filial: dados.filial ? ({ id: dados.filial.id } as any) : undefined,
-    };
-
-    const novoUsuario = this.repository.create(novoUsuarioData);
+      perfil: perfilSelecionado,
+      filial: dados.filial?.id ? ({ id: dados.filial.id } as any) : undefined,
+    });
 
     return await this.repository.save(novoUsuario);
   }
 
+
+
   // Oculta o usuário 'root' da listagem geral e remove o campo senha do retorno
   async listar(): Promise<Usuarios[]> {
-    const usuarios = await this.repository.find({
-      relations: ['filial', 'perfil'],
-      where: {
-        perfil: {
-          nome: Not('root'),
-        },
-      },
-      order: { nome: 'ASC' },
-    });
+    const usuarios = await this.repository
+      .createQueryBuilder('usuario')
+      .leftJoinAndSelect('usuario.filial', 'filial')
+      .leftJoinAndSelect('usuario.perfil', 'perfil')
+      .where('LOWER(perfil.nome) != :root OR perfil.id IS NULL', {
+        root: 'root',
+      })
+      .orderBy('usuario.nome', 'ASC')
+      .getMany();
 
     return usuarios.map(({ senha, ...rest }) => rest as Usuarios);
   }
@@ -134,24 +140,26 @@ export class UsuariosService implements OnModuleInit {
   }
 
   async alterar(id: string, dadosAtualizacao: Partial<Usuarios>): Promise<void> {
-    const usuarioExiste = await this.buscarPorId(id);
+    await this.buscarPorId(id);
 
-    if (!usuarioExiste) {
-      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
-    }
-
-    // 🔒 Impede promover qualquer usuário existente para 'root'
-    // 🔒 Impede promover qualquer usuário existente para 'root'
+    // 🔒 Valida o perfil informado e impede promover qualquer usuário para 'root'
     if (dadosAtualizacao.perfil?.id) {
+      const perfilId = String(dadosAtualizacao.perfil.id).trim();
       const perfilSelecionado = await this.perfilRepository.findOne({
-        where: { id: Number(dadosAtualizacao.perfil.id) },
+        where: { id: perfilId as any },
       });
 
-      if (perfilSelecionado?.nome?.toLowerCase() === 'root') {
+      if (!perfilSelecionado) {
+        throw new NotFoundException('Perfil de acesso não encontrado.');
+      }
+
+      if (perfilSelecionado.nome?.toLowerCase() === 'root') {
         throw new ForbiddenException(
-          "Não é permitido atribuir o perfil Root a um usuário.",
+          'Não é permitido atribuir o perfil Root a um usuário.',
         );
       }
+
+      dadosAtualizacao.perfil = perfilSelecionado;
     }
 
     if (dadosAtualizacao.senha) {
