@@ -9,15 +9,11 @@ import {
   UseGuards,
   Put,
   Req,
-<<<<<<< HEAD
-} from '@nestjs/common';
-=======
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
 import { AprovacoesService } from './aprovacoes.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';

@@ -26,10 +26,6 @@ export class AprovacoesService {
     private readonly notasFiscaisService: NotasFiscaisService,
   ) {}
 
-<<<<<<< HEAD
-  // Remove a senha do gestor e monta o objeto de carimbo para o Front/PDF
-=======
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
   private formatarComCarimbo(aprovacao: any): APROVACOES {
     if (!aprovacao) return aprovacao;
 
@@ -38,14 +34,11 @@ export class AprovacoesService {
       aprovacao.usuario = usuarioSemSenha;
     }
 
-<<<<<<< HEAD
-=======
     const dataRef = aprovacao.decidido_em || new Date();
     const dataFormatada = new Date(dataRef).toLocaleString('pt-BR', {
       timeZone: 'America/Sao_Paulo',
     });
 
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
     aprovacao.carimbo = {
       gestorId: aprovacao.usuario?.id || null,
       aprovadoPor: aprovacao.usuario?.nome || 'Gestor',
@@ -55,27 +48,16 @@ export class AprovacoesService {
           ? 'APROVADO PARA PAGAMENTO'
           : 'REPROVADO PELO GESTOR',
       pagamentoLiberado: aprovacao.decisao === 1,
-<<<<<<< HEAD
-      dataHora: aprovacao.createdAt || aprovacao.data_aprovacao || new Date(),
-      codigoAutenticacao: aprovacao.id
-        ? String(aprovacao.id).substring(0, 8).toUpperCase()
-        : '',
-=======
       dataHora: dataFormatada,
       codigoAutenticacao: aprovacao.id
         ? String(aprovacao.id).substring(0, 8).toUpperCase()
         : '',
       hashAssinatura: aprovacao.hash_assinatura || null,
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
     };
 
     return aprovacao;
   }
 
-<<<<<<< HEAD
-  // Buscar todas as aprovações
-=======
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
   async buscarTodas(): Promise<APROVACOES[]> {
     const aprovacoes = await this.repository.find({
       relations: ['nota', 'usuario'],
@@ -96,10 +78,6 @@ export class AprovacoesService {
     return this.formatarComCarimbo(aprovacao);
   }
 
-<<<<<<< HEAD
-  // Salva uma nova decisão (Aprovar/Reprovar)
-=======
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
   async inserir(
     dto: CreateAprovacoeDto,
     usuarioLogado?: any,
@@ -114,10 +92,6 @@ export class AprovacoesService {
       );
     }
 
-<<<<<<< HEAD
-    // Identifica o Gestor pelo Token JWT (ou usa dto.usuario se vier de teste)
-=======
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
     const gestorId = usuarioLogado?.sub || usuarioLogado?.id || dto.usuario;
 
     if (!gestorId) {
@@ -136,28 +110,12 @@ export class AprovacoesService {
     const aprovacaoSalva = (await this.repository.save(novaAprovacao)) as any;
 
     if (dto.decisao !== undefined && dto.nota) {
-<<<<<<< HEAD
-      let statusParaAtualizar = 0;
-      if (dto.decisao === 1) statusParaAtualizar = 1; // 1 = Aprovada para pagamento
-      else if (dto.decisao === 2) statusParaAtualizar = 2; // 2 = Reprovada
-
-      const notaId = dto.nota as string;
-
-      await this.notaRepository.update(notaId, {
-=======
       const statusParaAtualizar = dto.decisao === 1 ? 1 : dto.decisao === 2 ? 2 : 0;
       await this.notaRepository.update(dto.nota, {
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
         status: statusParaAtualizar,
       });
     }
 
-<<<<<<< HEAD
-    return await this.buscarPorId(aprovacaoSalva.id);
-  }
-
-  // Alterar aprovação existente
-=======
     const aprovacaoCompleta: any = await this.buscarPorId(aprovacaoSalva.id);
 
     if (dto.nota) {
@@ -188,7 +146,6 @@ export class AprovacoesService {
     return aprovacaoCompleta;
   }
 
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
   async alterar(
     id: string,
     dto: UpdateAprovacoeDto,
@@ -212,20 +169,7 @@ export class AprovacoesService {
       usuario: gestorId ? { id: gestorId } : aprovacaoAtual.usuario,
     } as any);
 
-<<<<<<< HEAD
-    if (
-      dto.decisao !== undefined &&
-      aprovacaoAtual.nota &&
-      aprovacaoAtual.nota.id
-    ) {
-      let statusParaAtualizar = 0;
-      if (dto.decisao === 1) statusParaAtualizar = 1;
-      else if (dto.decisao === 2) statusParaAtualizar = 2;
-
-      const notaId = aprovacaoAtual.nota.id as string;
-=======
-    const notaId = aprovacaoAtual.nota?.id;
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
+    const notaId = aprovacaoAtual.nota?.id as string | undefined;
 
     if (dto.decisao !== undefined && notaId) {
       const statusParaAtualizar = dto.decisao === 1 ? 1 : dto.decisao === 2 ? 2 : 0;
@@ -234,9 +178,6 @@ export class AprovacoesService {
       });
     }
 
-<<<<<<< HEAD
-    return await this.buscarPorId(id);
-=======
     const aprovacaoAtualizada: any = await this.buscarPorId(id);
 
     if (notaId) {
@@ -265,7 +206,6 @@ export class AprovacoesService {
     }
 
     return aprovacaoAtualizada;
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
   }
 
   async excluir(id: string): Promise<void> {
@@ -275,10 +215,8 @@ export class AprovacoesService {
         await this.notaRepository.update(existe.nota.id as string, {
           status: 0,
         });
-<<<<<<< HEAD
-=======
+
         await this.notasFiscaisService.removerCarimboDoPdf(existe.nota.id);
->>>>>>> c5f3b29 (feat(aprovacoes): unifica central de auditoria e corrige fluxo de autenticação e usuários)
       }
       await this.repository.delete(id);
     }
